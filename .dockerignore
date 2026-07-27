@@ -1,0 +1,9 @@
+node_modules
+.output
+.git
+.github
+.lovable
+graphify-out
+*.log
+.vscode
+.idea

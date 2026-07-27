@@ -1,0 +1,296 @@
+{
+  "nodes": [
+    {
+      "id": "src_routes_readme_file_based_routing",
+      "label": "File-Based Routing",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "TanStack Start uses file-based routing; every .tsx in src/routes is a route. Next.js/Remix conventions avoided."
+    },
+    {
+      "id": "src_routes_readme_index_route",
+      "label": "Index Route (index.tsx to /)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_about_route",
+      "label": "About Route (about.tsx to /about)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_users_index_route",
+      "label": "Users Index Route (users/index.tsx to /users)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_dynamic_route",
+      "label": "Dynamic Route (users/$id.tsx to /users/:id)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Dynamic params use bare $ prefix, no curly braces."
+    },
+    {
+      "id": "src_routes_readme_optional_segment",
+      "label": "Optional Segment (posts/{-$category}.tsx to /posts/:category?)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_splat_route",
+      "label": "Splat Route (files/$.tsx to /files/*)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Splat read via _splat param, never *."
+    },
+    {
+      "id": "src_routes_readme_layout_route",
+      "label": "Layout Route (_layout.tsx via Outlet)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_root_layout",
+      "label": "Root Layout (__root.tsx app shell)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 6,19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Only root layout is __root.tsx; wraps every page, preserve Outlet. Next.js app/layout.tsx rejected."
+    },
+    {
+      "id": "src_routes_readme_routetree_gen",
+      "label": "Auto-Generated Route Tree (routeTree.gen.ts)",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Auto-generated; hand edits overwritten."
+    },
+    {
+      "id": "src_routes_readme_tanstack_start",
+      "label": "TanStack Start",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_readme_nextjs_remix_conventions",
+      "label": "Next.js/Remix Conventions - Avoided",
+      "file_type": "concept",
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "src/pages, _app/index.tsx, app/layout.tsx disallowed to keep TanStack Start routing pure."
+    }
+  ],
+  "edges": [
+    {
+      "source": "src_routes_readme_tanstack_start",
+      "target": "src_routes_readme_file_based_routing",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 3",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_index_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 12",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_about_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 13",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_users_index_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 14",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_dynamic_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 15",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_optional_segment",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 16",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_splat_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 17",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_layout_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 18",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_root_layout",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 6",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_routetree_gen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 21",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_file_based_routing",
+      "target": "src_routes_readme_nextjs_remix_conventions",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 5",
+      "weight": 1
+    },
+    {
+      "source": "src_routes_readme_nextjs_remix_conventions",
+      "target": "src_routes_readme_root_layout",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 5-6",
+      "weight": 0.85
+    },
+    {
+      "source": "src_routes_readme_layout_route",
+      "target": "src_routes_readme_root_layout",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md",
+      "source_location": "line 18-19",
+      "weight": 0.85
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "tanstack_route_conventions",
+      "label": "TanStack Start Route File Convention Set",
+      "nodes": [
+        "src_routes_readme_index_route",
+        "src_routes_readme_about_route",
+        "src_routes_readme_users_index_route",
+        "src_routes_readme_dynamic_route",
+        "src_routes_readme_optional_segment",
+        "src_routes_readme_splat_route",
+        "src_routes_readme_layout_route",
+        "src_routes_readme_root_layout"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "C:\\\\Projetos\\\\projeto_alan\\\\gem-batch-stream-6171be0c\\\\src\\\\routes\\\\README.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

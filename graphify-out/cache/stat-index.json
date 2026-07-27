@@ -1,0 +1,397 @@
+{
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\.lovable\\project.json": {
+    "size": 75,
+    "mtime_ns": 1784116177832350700,
+    "word_count": 6,
+    "hash": "bdddf1695b2e730b10b8746f5dc823bc1bdf9e5e703bec52e4c290e297d6e1e7"
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\components.json": {
+    "size": 465,
+    "mtime_ns": 1784116177834369400,
+    "word_count": 40,
+    "hash": "0c6ca0e7f585a638e1d40e0882405600e1bc5372a78eaf461d58ba69becb610d"
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\eslint.config.js": {
+    "size": 1290,
+    "mtime_ns": 1784116177834369400,
+    "word_count": 101
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\package.json": {
+    "size": 3116,
+    "mtime_ns": 1784116177834369400,
+    "word_count": 186,
+    "hash": "6f7e2d72aae6ed054e9603dc7a7ac2c9faf050cea58c48904682ca16719238b6"
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\AppLayout.tsx": {
+    "size": 1255,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 126
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\AppSidebar.tsx": {
+    "size": 3670,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 267
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ProfileMenu.tsx": {
+    "size": 8609,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 573
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\StageBadge.tsx": {
+    "size": 1753,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 177
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\accordion.tsx": {
+    "size": 2066,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 145
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\alert-dialog.tsx": {
+    "size": 4298,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 289
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\alert.tsx": {
+    "size": 1638,
+    "mtime_ns": 1784116177836387400,
+    "word_count": 145
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\aspect-ratio.tsx": {
+    "size": 148,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 14
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\avatar.tsx": {
+    "size": 1460,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 117
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\badge.tsx": {
+    "size": 1155,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 100
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\breadcrumb.tsx": {
+    "size": 2850,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 244
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\button.tsx": {
+    "size": 1943,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 171
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\calendar.tsx": {
+    "size": 7387,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 462
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\card.tsx": {
+    "size": 1872,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 173
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\carousel.tsx": {
+    "size": 6440,
+    "mtime_ns": 1784116177838406400,
+    "word_count": 557
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\chart.tsx": {
+    "size": 10901,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 895
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\checkbox.tsx": {
+    "size": 1069,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 82
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\collapsible.tsx": {
+    "size": 346,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 26
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\command.tsx": {
+    "size": 5019,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 355
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\context-menu.tsx": {
+    "size": 7578,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 481
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\dialog.tsx": {
+    "size": 3794,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 270
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\drawer.tsx": {
+    "size": 3071,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 246
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\dropdown-menu.tsx": {
+    "size": 7784,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 492
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\form.tsx": {
+    "size": 4372,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 404
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\hover-card.tsx": {
+    "size": 1273,
+    "mtime_ns": 1784116177840167100,
+    "word_count": 86
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\input-otp.tsx": {
+    "size": 2230,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 198
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\input.tsx": {
+    "size": 798,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 69
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\label.tsx": {
+    "size": 737,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 70
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\menubar.tsx": {
+    "size": 8775,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 602
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\navigation-menu.tsx": {
+    "size": 5272,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 326
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\pagination.tsx": {
+    "size": 2837,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 254
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\popover.tsx": {
+    "size": 1383,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 93
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\progress.tsx": {
+    "size": 806,
+    "mtime_ns": 1784116177842184600,
+    "word_count": 71
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\radio-group.tsx": {
+    "size": 1441,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 110
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\resizable.tsx": {
+    "size": 1589,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 117
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\scroll-area.tsx": {
+    "size": 1679,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 120
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\select.tsx": {
+    "size": 5901,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 379
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\separator.tsx": {
+    "size": 747,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 67
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\sheet.tsx": {
+    "size": 4370,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 322
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\sidebar.tsx": {
+    "size": 24719,
+    "mtime_ns": 1784116177844200000,
+    "word_count": 1868
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\skeleton.tsx": {
+    "size": 246,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 26
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\slider.tsx": {
+    "size": 1048,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 83
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\sonner.tsx": {
+    "size": 757,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 55
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\switch.tsx": {
+    "size": 1183,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 85
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\table.tsx": {
+    "size": 2914,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 238
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\tabs.tsx": {
+    "size": 1987,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 143
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\textarea.tsx": {
+    "size": 698,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 61
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\toggle-group.tsx": {
+    "size": 1809,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 139
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\toggle.tsx": {
+    "size": 1576,
+    "mtime_ns": 1784116177846212900,
+    "word_count": 130
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\components\\ui\\tooltip.tsx": {
+    "size": 1310,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 90
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\hooks\\use-mobile.tsx": {
+    "size": 595,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 56
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\api\\example.functions.ts": {
+    "size": 922,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 126
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\config.server.ts": {
+    "size": 1140,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 157
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\error-capture.ts": {
+    "size": 933,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 107
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\error-page.ts": {
+    "size": 1401,
+    "mtime_ns": 1784116177848229600,
+    "word_count": 159
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\inbound.ts": {
+    "size": 10565,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 1039
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\lovable-error-reporting.ts": {
+    "size": 866,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 83
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\profile.ts": {
+    "size": 1163,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 141
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\store.ts": {
+    "size": 13482,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 1388
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\lib\\utils.ts": {
+    "size": 175,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 22
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routeTree.gen.ts": {
+    "size": 4982,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 470
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\router.tsx": {
+    "size": 410,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 47
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\README.md": {
+    "size": 851,
+    "mtime_ns": 1784116177850248800,
+    "word_count": 127,
+    "hash": "40a3c503136eac731065311fd3256ad8823758c46fbbbc92fc8e605c4cb96f43"
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\__root.tsx": {
+    "size": 4108,
+    "mtime_ns": 1784116177852266500,
+    "word_count": 375
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\inbound.tsx": {
+    "size": 31234,
+    "mtime_ns": 1784116177852266500,
+    "word_count": 2284
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\index.tsx": {
+    "size": 12563,
+    "mtime_ns": 1784116177852266500,
+    "word_count": 1083
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\pedidos.tsx": {
+    "size": 27986,
+    "mtime_ns": 1784116177852266500,
+    "word_count": 2192
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\produtividade.tsx": {
+    "size": 8147,
+    "mtime_ns": 1784116177852266500,
+    "word_count": 631
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\relatorios.tsx": {
+    "size": 9675,
+    "mtime_ns": 1784116177854285900,
+    "word_count": 692
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\routes\\templates.tsx": {
+    "size": 3881,
+    "mtime_ns": 1784116177854285900,
+    "word_count": 326
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\server.ts": {
+    "size": 1900,
+    "mtime_ns": 1784116177854285900,
+    "word_count": 185
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\src\\start.ts": {
+    "size": 641,
+    "mtime_ns": 1784116177854285900,
+    "word_count": 74
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\tsconfig.json": {
+    "size": 699,
+    "mtime_ns": 1784116177854285900,
+    "word_count": 54,
+    "hash": "1e0580a210d686ab68e68bbd687aab0d1ae7e533ada3a31c5fe0283fb3277ce1"
+  },
+  "C:\\Projetos\\projeto_alan\\gem-batch-stream-6171be0c\\vite.config.ts": {
+    "size": 826,
+    "mtime_ns": 1784116177856051600,
+    "word_count": 106
+  }
+}
