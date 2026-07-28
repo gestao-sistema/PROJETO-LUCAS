@@ -1,28 +1,31 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Try Vite's import.meta.env first (for browser and dev)
-// Fallback to process.env (for Node.js SSR runtime on Railway)
-const getEnv = (key: string) => {
-  if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env[key]) {
-    return import.meta.env[key];
-  }
-  if (typeof process !== "undefined" && process.env && process.env[key]) {
-    return process.env[key];
-  }
-  return undefined;
-};
+// Vite replaces static import.meta.env.VITE_* at build time (client bundle)
+// process.env fallback for Node.js SSR / Railway runtime
+let supabaseUrl: string | undefined;
+let supabaseKey: string | undefined;
 
-const url = getEnv("VITE_SUPABASE_URL") || getEnv("SUPABASE_URL");
-const key = getEnv("VITE_SUPABASE_ANON_KEY") || getEnv("SUPABASE_ANON_KEY");
+try {
+  supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+} catch {}
+try {
+  supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+} catch {}
 
-if (!url || !key) {
+if (!supabaseUrl && typeof process !== "undefined") {
+  supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+}
+if (!supabaseKey && typeof process !== "undefined") {
+  supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+}
+
+if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY");
 }
 
-export const supabase = createClient(url, key, {
+export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
   },
 });
-
