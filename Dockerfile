@@ -8,10 +8,12 @@ COPY package.json package-lock.json ./
 RUN npm ci --include=dev
 
 FROM base AS build
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" npm run build
 
 FROM base AS production
 WORKDIR /app
