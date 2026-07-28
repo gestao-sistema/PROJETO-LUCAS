@@ -25,8 +25,10 @@ import { useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/relatorios")({
   beforeLoad: () => {
-    const role = useProfile.getState().profile?.role;
-    if (role !== "Admin") throw redirect({ to: "/pedidos" });
+    if (typeof window === "undefined") return;
+    const { profile, loading } = useProfile.getState();
+    if (loading) return;
+    if (profile?.role !== "Admin") throw redirect({ to: "/pedidos" });
   },
   head: () => ({
     meta: [

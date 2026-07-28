@@ -20,9 +20,12 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastros")({
   beforeLoad: () => {
-    const role = useProfile.getState().profile?.role;
-    if (!["Admin", "Gerente", "Coordenador"].includes(role ?? ""))
+    if (typeof window === "undefined") return;
+    const { profile, loading } = useProfile.getState();
+    if (loading) return;
+    if (!["Admin", "Gerente", "Coordenador"].includes(profile?.role ?? "")) {
       throw redirect({ to: "/pedidos" });
+    }
   },
   head: () => ({
     meta: [
