@@ -1,10 +1,11 @@
 FROM node:22-slim AS base
-RUN npm i -g npm@latest
+RUN npm install -g npm@latest
+ENV NODE_ENV=production
 
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 FROM base AS build
 WORKDIR /app
@@ -15,5 +16,8 @@ RUN npm run build
 FROM base AS production
 WORKDIR /app
 COPY --from=build /app/.output ./.output
+# Optional: copy node_modules if nitro/vinxi standalone requires some
+# Usually .output is fully bundled standalone
+ENV PORT=8080
 EXPOSE 8080
 CMD ["node", ".output/server/index.mjs"]
