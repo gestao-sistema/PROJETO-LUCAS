@@ -555,6 +555,19 @@ function SortableCard({
   const columns = useStore((s) => s.columns);
   const pedras = useStore((s) => s.pedras);
   const dragGuard = useRef(false);
+  const dragTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function syncDragGuard() {
+    if (isDragging) {
+      dragGuard.current = true;
+      if (dragTimer.current) clearTimeout(dragTimer.current);
+    } else {
+      dragTimer.current = setTimeout(() => {
+        dragGuard.current = false;
+      }, 50);
+    }
+  }
+  syncDragGuard();
   const totalTasks = order.tasks.filter((t) => t.stage === order.currentStage).length;
   const doneTasks = order.tasks.filter((t) => t.stage === order.currentStage && t.done).length;
   const div = totalDivergences(order);
@@ -1190,7 +1203,6 @@ function StageForm({
 
   useEffect(() => {
     registerSave?.(save);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   });
 
   return (

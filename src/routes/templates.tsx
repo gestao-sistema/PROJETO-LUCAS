@@ -143,340 +143,280 @@ function SummaryCard({
   );
 }
 
-  /* ============== COLUNAS + TAREFAS POR COLUNA ============== */
+/* ============== COLUNAS + TAREFAS POR COLUNA ============== */
 
-  function ColumnsSection() {
-    const columns = useStore((s) => s.columns);
-    const addColumn = useStore((s) => s.addColumn);
-    const reorderColumns = useStore((s) => s.reorderColumns);
-    const [newCol, setNewCol] = useState("");
+function ColumnsSection() {
+  const columns = useStore((s) => s.columns);
+  const addColumn = useStore((s) => s.addColumn);
+  const reorderColumns = useStore((s) => s.reorderColumns);
+  const [newCol, setNewCol] = useState("");
 
-    const colSensors = useSensors(
-      useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    );
-    const colIds = columns.map((c) => c.id);
+  const colSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+  const colIds = columns.map((c) => c.id);
 
-    function add() {
-      if (!newCol.trim()) return;
-      addColumn(newCol.trim());
-      setNewCol("");
-      toast.success("Coluna criada.");
-    }
-
-    function handleColDragEnd(e: DragEndEvent) {
-      const { active, over } = e;
-      if (!over || active.id === over.id) return;
-      const fromIdx = columns.findIndex((c) => c.id === active.id);
-      const toIdx = columns.findIndex((c) => c.id === over.id);
-      if (fromIdx < 0 || toIdx < 0) return;
-      reorderColumns(fromIdx, toIdx);
-      toast.success("Colunas reordenadas.");
-    }
-
-    return (
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold tracking-tight">Colunas do Kanban</h2>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-            {columns.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Nova coluna (ex: Qualidade)..."
-            value={newCol}
-            onChange={(e) => setNewCol(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add();
-              }
-            }}
-            className="rounded-full"
-          />
-          <Button disabled={!newCol.trim()} onClick={add} className="rounded-full">
-            <Plus className="h-4 w-4" /> Adicionar coluna
-          </Button>
-        </div>
-
-        {columns.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-            <Columns3 className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-            <div className="text-sm font-medium">Nenhuma coluna ainda</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Crie a primeira coluna para montar o fluxo do Dock-to-Stock.
-            </div>
-          </div>
-        ) : (
-          <DndContext
-            sensors={colSensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleColDragEnd}
-          >
-            <SortableContext items={colIds} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4">
-                {columns.map((col) => (
-                  <ColumnCard key={col.id} column={col} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </section>
-    );
+  function add() {
+    if (!newCol.trim()) return;
+    addColumn(newCol.trim());
+    setNewCol("");
+    toast.success("Coluna criada.");
   }
 
-  function ColumnCard({ column }: { column: KanbanColumn }) {
-    const renameColumn = useStore((s) => s.renameColumn);
-    const removeColumn = useStore((s) => s.removeColumn);
-    const templates = useStore((s) => s.templates[column.id] ?? EMPTY_TEMPLATES);
-    const setTemplate = useStore((s) => s.setTemplate);
-    const reorderTemplateItems = useStore((s) => s.reorderTemplateItems);
-    const columns = useStore((s) => s.columns);
-    const orders = useStore((s) => s.orders);
+  function handleColDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const fromIdx = columns.findIndex((c) => c.id === active.id);
+    const toIdx = columns.findIndex((c) => c.id === over.id);
+    if (fromIdx < 0 || toIdx < 0) return;
+    reorderColumns(fromIdx, toIdx);
+    toast.success("Colunas reordenadas.");
+  }
 
-    const [draftTitle, setDraftTitle] = useState("");
-    const [draftWeight, setDraftWeight] = useState<TaskWeight>(1);
-    const [editingName, setEditingName] = useState(false);
-    const [nameDraft, setNameDraft] = useState(column.label);
-
-    const colSortable = useSortable({ id: column.id });
-    const colStyle = {
-      transform: CSS.Transform.toString(colSortable.transform),
-      transition: colSortable.transition,
-      opacity: colSortable.isDragging ? 0.5 : 1,
-    };
-
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-
-    function addTask() {
-      if (!draftTitle.trim()) return;
-      setTemplate(column.id, [...templates, { title: draftTitle.trim(), weight: draftWeight }]);
-      setDraftTitle("");
-      setDraftWeight(1);
-    }
-
-    function handleDragEnd(e: DragEndEvent) {
-      const { active, over } = e;
-      if (!over || active.id === over.id) return;
-      const fromIdx = Number(String(active.id).replace("tpl-", ""));
-      const toIdx = Number(String(over.id).replace("tpl-", ""));
-      reorderTemplateItems(column.id, fromIdx, toIdx);
-    }
-
-    const sortableIds = templates.map((_, i) => `tpl-${i}`);
-
-    return (
-      <div
-        ref={colSortable.setNodeRef}
-        style={colStyle}
-        className="rounded-2xl border border-border bg-card p-5 shadow-sm"
-      >
-        <header className="flex items-center justify-between pb-3">
-          <button
-            {...colSortable.attributes}
-            {...colSortable.listeners}
-            className="mr-2 cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
-            aria-label="Arrastar coluna"
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          {editingName ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                className="h-8 max-w-[16rem]"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    renameColumn(column.id, nameDraft);
-                    setEditingName(false);
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8"
-                onClick={() => {
-                  renameColumn(column.id, nameDraft);
-                  setEditingName(false);
-                }}
-              >
-                OK
-              </Button>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                setNameDraft(column.label);
-                setEditingName(true);
-              }}
-              className="text-left text-sm font-semibold tracking-tight hover:underline"
-            >
-              {column.label}
-              {column.isFinalizado && (
-                <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                  Finalizado
-                </span>
-              )}
-            </button>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-              {templates.length} tarefa{templates.length === 1 ? "" : "s"}
-            </span>
-            {!column.isFinalizado && columns.length > 1 && (
-              <button
-                onClick={() => {
-                  const lotsInCol = orders.filter((o) => o.currentStage === column.id);
-                  const tasksInCol = orders.reduce(
-                    (sum, o) => sum + o.tasks.filter((t) => t.stage === column.id).length,
-                    0,
-                  );
-                  let msg = `Remover a coluna "${column.label}"?`;
-                  if (lotsInCol.length > 0 || tasksInCol > 0) {
-                    msg += `\n\nEsta coluna possui ${lotsInCol.length} lote(s)`;
-                    if (tasksInCol > 0) msg += ` e ${tasksInCol} tarefa(s)`;
-                    msg += ".\nOs lotes serão realocados e as tarefas desta etapa serão removidas.";
-                  }
-                  if (confirm(msg)) {
-                    removeColumn(column.id);
-                    toast.success("Coluna removida.");
-                  }
-                }}
-                className="text-muted-foreground hover:text-red-600"
-                aria-label="Remover coluna"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </header>
-
-        {templates.length === 0 ? (
-          <div className="rounded-xl border border-border bg-background px-4 py-4 text-center text-xs text-muted-foreground">
-            Nenhuma tarefa modelo nesta coluna.
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-              <ul className="divide-y divide-border rounded-xl border border-border bg-background">
-                {templates.map((it, i) => (
-                  <SortableTemplateItem
-                    key={i}
-                    id={`tpl-${i}`}
-                    title={it.title}
-                    weight={it.weight}
-                    onTitleChange={(title) => {
-                      const next = [...templates];
-                      next[i] = { ...next[i], title };
-                      setTemplate(column.id, next);
-                    }}
-                    onWeightChange={(w) => {
-                      const next = [...templates];
-                      next[i] = { ...next[i], weight: w };
-                      setTemplate(column.id, next);
-                    }}
-                    onRemove={() =>
-                      setTemplate(
-                        column.id,
-                        templates.filter((_, idx) => idx !== i),
-                      )
-                    }
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Input
-            placeholder="Nova tarefa modelo..."
-            value={draftTitle}
-            onChange={(e) => setDraftTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTask();
-              }
-            }}
-            className="min-w-[12rem] flex-1 rounded-full"
-          />
-          <Select
-            value={String(draftWeight)}
-            onValueChange={(v) => setDraftWeight(Number(v) as TaskWeight)}
-          >
-            <SelectTrigger className="h-9 w-auto min-w-[7rem] rounded-full">
-              <span className="text-xs">Peso {draftWeight}</span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Peso 1 (leve)</SelectItem>
-              <SelectItem value="2">Peso 2 (médio)</SelectItem>
-              <SelectItem value="3">Peso 3 (pesado)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button disabled={!draftTitle.trim()} onClick={addTask} className="rounded-full">
-            <Plus className="h-4 w-4" /> Adicionar
-          </Button>
-        </div>
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold tracking-tight">Colunas do Kanban</h2>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+          {columns.length}
+        </span>
       </div>
-    );
+
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Nova coluna (ex: Qualidade)..."
+          value={newCol}
+          onChange={(e) => setNewCol(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          className="rounded-full"
+        />
+        <Button disabled={!newCol.trim()} onClick={add} className="rounded-full">
+          <Plus className="h-4 w-4" /> Adicionar coluna
+        </Button>
+      </div>
+
+      {columns.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <Columns3 className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+          <div className="text-sm font-medium">Nenhuma coluna ainda</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Crie a primeira coluna para montar o fluxo do Dock-to-Stock.
+          </div>
+        </div>
+      ) : (
+        <DndContext
+          sensors={colSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleColDragEnd}
+        >
+          <SortableContext items={colIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {columns.map((col) => (
+                <ColumnCard key={col.id} column={col} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+    </section>
+  );
+}
+
+function ColumnCard({ column }: { column: KanbanColumn }) {
+  const renameColumn = useStore((s) => s.renameColumn);
+  const removeColumn = useStore((s) => s.removeColumn);
+  const templates = useStore((s) => s.templates[column.id] ?? EMPTY_TEMPLATES);
+  const setTemplate = useStore((s) => s.setTemplate);
+  const commitTemplate = useStore((s) => s.commitTemplate);
+  const reorderTemplateItems = useStore((s) => s.reorderTemplateItems);
+  const columns = useStore((s) => s.columns);
+  const orders = useStore((s) => s.orders);
+
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftWeight, setDraftWeight] = useState<TaskWeight>(1);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(column.label);
+
+  const colSortable = useSortable({ id: column.id });
+  const colStyle = {
+    transform: CSS.Transform.toString(colSortable.transform),
+    transition: colSortable.transition,
+    opacity: colSortable.isDragging ? 0.5 : 1,
+  };
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function addTask() {
+    if (!draftTitle.trim()) return;
+    setTemplate(column.id, [...templates, { title: draftTitle.trim(), weight: draftWeight }]);
+    commitTemplate(column.id);
+    setDraftTitle("");
+    setDraftWeight(1);
   }
 
-  function SortableTemplateItem({
-    id,
-    title,
-    weight,
-    onTitleChange,
-    onWeightChange,
-    onRemove,
-  }: {
-    id: string;
-    title: string;
-    weight: TaskWeight;
-    onTitleChange: (title: string) => void;
-    onWeightChange: (w: TaskWeight) => void;
-    onRemove: () => void;
-  }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-      id,
-    });
+  function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const fromIdx = Number(String(active.id).replace("tpl-", ""));
+    const toIdx = Number(String(over.id).replace("tpl-", ""));
+    reorderTemplateItems(column.id, fromIdx, toIdx);
+  }
 
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
+  const sortableIds = templates.map((_, i) => `tpl-${i}`);
 
-    return (
-      <li ref={setNodeRef} style={style} className="flex items-center gap-2 px-4 py-2.5">
+  return (
+    <div
+      ref={colSortable.setNodeRef}
+      style={colStyle}
+      className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+    >
+      <header className="flex items-center justify-between pb-3">
         <button
-          {...attributes}
-          {...listeners}
-          className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
-          aria-label="Arrastar"
+          {...colSortable.attributes}
+          {...colSortable.listeners}
+          className="mr-2 cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          aria-label="Arrastar coluna"
         >
           <GripVertical className="h-4 w-4" />
         </button>
+        {editingName ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              className="h-8 max-w-[16rem]"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  renameColumn(column.id, nameDraft);
+                  setEditingName(false);
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8"
+              onClick={() => {
+                renameColumn(column.id, nameDraft);
+                setEditingName(false);
+              }}
+            >
+              OK
+            </Button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setNameDraft(column.label);
+              setEditingName(true);
+            }}
+            className="text-left text-sm font-semibold tracking-tight hover:underline"
+          >
+            {column.label}
+            {column.isFinalizado && (
+              <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                Finalizado
+              </span>
+            )}
+          </button>
+        )}
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            {templates.length} tarefa{templates.length === 1 ? "" : "s"}
+          </span>
+          {!column.isFinalizado && columns.length > 1 && (
+            <button
+              onClick={() => {
+                const lotsInCol = orders.filter((o) => o.currentStage === column.id);
+                const tasksInCol = orders.reduce(
+                  (sum, o) => sum + o.tasks.filter((t) => t.stage === column.id).length,
+                  0,
+                );
+                let msg = `Remover a coluna "${column.label}"?`;
+                if (lotsInCol.length > 0 || tasksInCol > 0) {
+                  msg += `\n\nEsta coluna possui ${lotsInCol.length} lote(s)`;
+                  if (tasksInCol > 0) msg += ` e ${tasksInCol} tarefa(s)`;
+                  msg += ".\nOs lotes serão realocados e as tarefas desta etapa serão removidas.";
+                }
+                if (confirm(msg)) {
+                  removeColumn(column.id);
+                  toast.success("Coluna removida.");
+                }
+              }}
+              className="text-muted-foreground hover:text-red-600"
+              aria-label="Remover coluna"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {templates.length === 0 ? (
+        <div className="rounded-xl border border-border bg-background px-4 py-4 text-center text-xs text-muted-foreground">
+          Nenhuma tarefa modelo nesta coluna.
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+              {templates.map((it, i) => (
+                <SortableTemplateItem
+                  key={`${i}-${it.title}`}
+                  id={`tpl-${i}`}
+                  title={it.title}
+                  weight={it.weight}
+                  onTitleChange={(title) => {
+                    const next = [...templates];
+                    next[i] = { ...next[i], title };
+                    setTemplate(column.id, next);
+                  }}
+                  onTitleCommit={() => commitTemplate(column.id)}
+                  onWeightChange={(w) => {
+                    const next = [...templates];
+                    next[i] = { ...next[i], weight: w };
+                    setTemplate(column.id, next);
+                  }}
+                  onWeightCommit={() => commitTemplate(column.id)}
+                  onRemove={() => {
+                    setTemplate(
+                      column.id,
+                      templates.filter((_, idx) => idx !== i),
+                    );
+                    commitTemplate(column.id);
+                  }}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <Input
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          className="border-transparent bg-transparent px-0 shadow-none focus-visible:border-input focus-visible:bg-card"
+          placeholder="Nova tarefa modelo..."
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addTask();
+            }
+          }}
+          className="min-w-[12rem] flex-1 rounded-full"
         />
         <Select
-          value={String(weight)}
-          onValueChange={(v) => onWeightChange(Number(v) as TaskWeight)}
+          value={String(draftWeight)}
+          onValueChange={(v) => setDraftWeight(Number(v) as TaskWeight)}
         >
-          <SelectTrigger className="h-8 w-auto min-w-[7rem] rounded-full bg-muted/40">
-            <span className="text-xs">Peso {weight}</span>
+          <SelectTrigger className="h-9 w-auto min-w-[7rem] rounded-full">
+            <span className="text-xs">Peso {draftWeight}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="1">Peso 1 (leve)</SelectItem>
@@ -484,130 +424,202 @@ function SummaryCard({
             <SelectItem value="3">Peso 3 (pesado)</SelectItem>
           </SelectContent>
         </Select>
-        <button
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-red-600"
-          aria-label="Remover tarefa"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </li>
-    );
+        <Button disabled={!draftTitle.trim()} onClick={addTask} className="rounded-full">
+          <Plus className="h-4 w-4" /> Adicionar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SortableTemplateItem({
+  id,
+  title,
+  weight,
+  onTitleChange,
+  onTitleCommit,
+  onWeightChange,
+  onWeightCommit,
+  onRemove,
+}: {
+  id: string;
+  title: string;
+  weight: TaskWeight;
+  onTitleChange: (title: string) => void;
+  onTitleCommit: () => void;
+  onWeightChange: (w: TaskWeight) => void;
+  onWeightCommit: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <li ref={setNodeRef} style={style} className="flex items-center gap-2 px-4 py-2.5">
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        aria-label="Arrastar"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <Input
+        value={title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        onBlur={onTitleCommit}
+        className="border-transparent bg-transparent px-0 shadow-none focus-visible:border-input focus-visible:bg-card"
+      />
+      <Select
+        value={String(weight)}
+        onValueChange={(v) => {
+          onWeightChange(Number(v) as TaskWeight);
+          onWeightCommit();
+        }}
+      >
+        <SelectTrigger className="h-8 w-auto min-w-[7rem] rounded-full bg-muted/40">
+          <span className="text-xs">Peso {weight}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">Peso 1 (leve)</SelectItem>
+          <SelectItem value="2">Peso 2 (médio)</SelectItem>
+          <SelectItem value="3">Peso 3 (pesado)</SelectItem>
+        </SelectContent>
+      </Select>
+      <button
+        onClick={onRemove}
+        className="text-muted-foreground hover:text-red-600"
+        aria-label="Remover tarefa"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </li>
+  );
+}
+
+/* ============== TASKS SECTION (tarefas + sub-tarefas + tags) ============== */
+
+function TasksSection() {
+  const taskTags = useStore((s) => s.taskTags);
+  const addTaskTag = useStore((s) => s.addTaskTag);
+  const removeTaskTag = useStore((s) => s.removeTaskTag);
+  const personalTasks = useStore((s) => s.personalTasks);
+  const addStandaloneTask = useStore((s) => s.addStandaloneTask);
+  const team = useStore((s) => s.team);
+  const columns = useStore((s) => s.columns);
+
+  const [newTagLabel, setNewTagLabel] = useState("");
+  const [newTagColor, setNewTagColor] = useState("bg-slate-500");
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
+  const [newTaskTagId, setNewTaskTagId] = useState("");
+
+  const customTags = taskTags.filter((t) => !t.isColumn);
+  const tarefas = personalTasks.filter((t) => !t.parentId);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const groupedByTag = useMemo(() => {
+    const map = new Map<string | null, PersonalTask[]>();
+    for (const t of tarefas) {
+      const key = t.tagId ?? null;
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    }
+    return map;
+  }, [tarefas]);
+
+  const tagGroups = useMemo(() => {
+    const groups: { key: string | null; label: string; color?: string; tasks: PersonalTask[] }[] =
+      [];
+    for (const [tagId, tasks] of groupedByTag) {
+      const tag = tagId ? taskTags.find((t) => t.id === tagId) : null;
+      groups.push({
+        key: tagId,
+        label: tag?.label ?? "Sem Tag",
+        color: tag?.color,
+        tasks,
+      });
+    }
+    groups.sort((a, b) => {
+      if (a.key === null) return 1;
+      if (b.key === null) return -1;
+      return a.label.localeCompare(b.label);
+    });
+    return groups;
+  }, [groupedByTag, taskTags]);
+
+  function toggleGroup(key: string) {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  /* ============== TASKS SECTION (tarefas + sub-tarefas + tags) ============== */
+  function handleAddTag() {
+    if (!newTagLabel.trim()) return;
+    addTaskTag(newTagLabel.trim(), newTagColor);
+    setNewTagLabel("");
+    toast.success("Tag criada.");
+  }
 
-  function TasksSection() {
-    const taskTags = useStore((s) => s.taskTags);
-    const addTaskTag = useStore((s) => s.addTaskTag);
-    const removeTaskTag = useStore((s) => s.removeTaskTag);
-    const personalTasks = useStore((s) => s.personalTasks);
-    const addStandaloneTask = useStore((s) => s.addStandaloneTask);
-    const team = useStore((s) => s.team);
-    const columns = useStore((s) => s.columns);
-
-    const [newTagLabel, setNewTagLabel] = useState("");
-    const [newTagColor, setNewTagColor] = useState("bg-slate-500");
-    const [newTaskTitle, setNewTaskTitle] = useState("");
-    const [newTaskAssignee, setNewTaskAssignee] = useState("");
-    const [newTaskDueDate, setNewTaskDueDate] = useState("");
-    const [newTaskTagId, setNewTaskTagId] = useState("");
-
-    const customTags = taskTags.filter((t) => !t.isColumn);
-    const tarefas = personalTasks.filter((t) => !t.parentId);
-    const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-
-    const groupedByTag = useMemo(() => {
-      const map = new Map<string | null, PersonalTask[]>();
-      for (const t of tarefas) {
-        const key = t.tagId ?? null;
-        const arr = map.get(key) ?? [];
-        arr.push(t);
-        map.set(key, arr);
-      }
-      return map;
-    }, [tarefas]);
-
-    const tagGroups = useMemo(() => {
-      const groups: { key: string | null; label: string; color?: string; tasks: PersonalTask[] }[] = [];
-      for (const [tagId, tasks] of groupedByTag) {
-        const tag = tagId ? taskTags.find((t) => t.id === tagId) : null;
-        groups.push({
-          key: tagId,
-          label: tag?.label ?? "Sem Tag",
-          color: tag?.color,
-          tasks,
-        });
-      }
-      groups.sort((a, b) => {
-        if (a.key === null) return 1;
-        if (b.key === null) return -1;
-        return a.label.localeCompare(b.label);
-      });
-      return groups;
-    }, [groupedByTag, taskTags]);
-
-    function toggleGroup(key: string) {
-      setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  function handleAddTask() {
+    if (!newTaskTitle.trim() || !newTaskAssignee) {
+      toast.error("Preencha titulo e responsavel.");
+      return;
     }
+    addStandaloneTask(newTaskTitle.trim(), newTaskAssignee, {
+      dueDate: newTaskDueDate || undefined,
+      tagId: newTaskTagId || undefined,
+    });
+    setNewTaskTitle("");
+    setNewTaskDueDate("");
+    setNewTaskTagId("");
+    toast.success("Tarefa criada.");
+  }
 
-    function handleAddTag() {
-      if (!newTagLabel.trim()) return;
-      addTaskTag(newTagLabel.trim(), newTagColor);
-      setNewTagLabel("");
-      toast.success("Tag criada.");
-    }
+  const availableColors: { value: string; label: string }[] = [
+    { value: "bg-slate-500", label: "Cinza" },
+    { value: "bg-blue-500", label: "Azul" },
+    { value: "bg-emerald-500", label: "Verde" },
+    { value: "bg-amber-500", label: "Ambar" },
+    { value: "bg-violet-500", label: "Violeta" },
+    { value: "bg-rose-500", label: "Rosa" },
+    { value: "bg-cyan-500", label: "Ciano" },
+    { value: "bg-orange-500", label: "Laranja" },
+  ];
 
-    function handleAddTask() {
-      if (!newTaskTitle.trim() || !newTaskAssignee) {
-        toast.error("Preencha titulo e responsavel.");
-        return;
-      }
-      addStandaloneTask(newTaskTitle.trim(), newTaskAssignee, {
-        dueDate: newTaskDueDate || undefined,
-        tagId: newTaskTagId || undefined,
-      });
-      setNewTaskTitle("");
-      setNewTaskDueDate("");
-      setNewTaskTagId("");
-      toast.success("Tarefa criada.");
-    }
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold tracking-tight">Gestão de Tarefas</h2>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+          {tarefas.length} tarefas · {personalTasks.length - tarefas.length} sub-tarefas
+        </span>
+      </div>
 
-    const availableColors: { value: string; label: string }[] = [
-      { value: "bg-slate-500", label: "Cinza" },
-      { value: "bg-blue-500", label: "Azul" },
-      { value: "bg-emerald-500", label: "Verde" },
-      { value: "bg-amber-500", label: "Ambar" },
-      { value: "bg-violet-500", label: "Violeta" },
-      { value: "bg-rose-500", label: "Rosa" },
-      { value: "bg-cyan-500", label: "Ciano" },
-      { value: "bg-orange-500", label: "Laranja" },
-    ];
+      {/* Tags */}
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-tight">
+          <Tag className="h-4 w-4" />
+          Tags
+        </h3>
 
-    return (
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold tracking-tight">Gestão de Tarefas</h2>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-            {tarefas.length} tarefas · {personalTasks.length - tarefas.length} sub-tarefas
-          </span>
-        </div>
-
-        {/* Tags */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-tight">
-            <Tag className="h-4 w-4" />
-            Tags
-          </h3>
-
-          {/* Tags de coluna (somente leitura) */}
-          {taskTags.some((t) => t.isColumn) && (
-            <div className="mb-4">
-              <div className="mb-2 text-xs font-medium text-muted-foreground">
-                Tags de colunas (automáticas)
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {taskTags.filter((t) => t.isColumn).map((tag) => (
+        {/* Tags de coluna (somente leitura) */}
+        {taskTags.some((t) => t.isColumn) && (
+          <div className="mb-4">
+            <div className="mb-2 text-xs font-medium text-muted-foreground">
+              Tags de colunas (automáticas)
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {taskTags
+                .filter((t) => t.isColumn)
+                .map((tag) => (
                   <span
                     key={tag.id}
                     className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white ${tag.color}`}
@@ -616,289 +628,287 @@ function SummaryCard({
                     {tag.label}
                   </span>
                 ))}
-              </div>
             </div>
-          )}
-
-          {/* Tags customizadas (editáveis) */}
-          <div className="mb-2 text-xs font-medium text-muted-foreground">
-            Tags personalizadas
           </div>
-          {customTags.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border bg-background px-4 py-3 text-center text-xs text-muted-foreground">
-              Nenhuma tag personalizada. Crie tags para classificar tarefas.
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {customTags.map((tag) => (
-                <div
-                  key={tag.id}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white ${tag.color}`}
-                >
-                  {tag.label}
-                  <button
-                    onClick={() => {
-                      if (confirm(`Remover tag "${tag.label}"?`)) {
-                        removeTaskTag(tag.id);
-                        toast.success("Tag removida.");
-                      }
-                    }}
-                    className="hover:text-red-200"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Input
-              placeholder="Nova tag..."
-              value={newTagLabel}
-              onChange={(e) => setNewTagLabel(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddTag();
-                }
-              }}
-              className="h-9 rounded-full flex-1 min-w-[180px]"
-            />
-            <div className="flex items-center gap-1.5">
-              {availableColors.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  title={c.label}
-                  onClick={() => setNewTagColor(c.value)}
-                  className={`h-7 w-7 rounded-full transition-all ${c.value} ${
-                    newTagColor === c.value
-                      ? "ring-2 ring-offset-2 ring-foreground scale-110"
-                      : "hover:scale-110"
-                  }`}
-                />
-              ))}
-            </div>
-            <Button disabled={!newTagLabel.trim()} onClick={handleAddTag} className="rounded-full">
-              <Plus className="h-4 w-4" /> Criar tag
-            </Button>
-          </div>
-        </div>
+        )}
 
-        {/* Criar Tarefa */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold tracking-tight">Criar Tarefa</h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Input
-              placeholder="Título da tarefa..."
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="rounded-full"
-            />
-            <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
-              <SelectTrigger className="h-9 rounded-full">
-                <SelectValue placeholder="Responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                {team.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              placeholder="Data de entrega (opcional)"
-              value={newTaskDueDate}
-              onChange={(e) => setNewTaskDueDate(e.target.value)}
-              className="rounded-full"
-            />
-            <Select value={newTaskTagId} onValueChange={setNewTaskTagId}>
-              <SelectTrigger className="h-9 rounded-full">
-                <SelectValue placeholder="Tag (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Sem tag</SelectItem>
-                {taskTags.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${t.color}`} />
-                      {t.label}
-                      {t.isColumn && (
-                        <span className="text-[10px] text-muted-foreground">(coluna)</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            disabled={!newTaskTitle.trim() || !newTaskAssignee}
-            onClick={handleAddTask}
-            className="mt-3 rounded-full"
-          >
-            <Plus className="h-4 w-4" /> Criar tarefa
-          </Button>
-        </div>
-
-        {/* Listar Tarefas + Sub-Tarefas */}
-        {tarefas.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-            <Weight className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-            <div className="text-sm font-medium">Nenhuma tarefa</div>
+        {/* Tags customizadas (editáveis) */}
+        <div className="mb-2 text-xs font-medium text-muted-foreground">Tags personalizadas</div>
+        {customTags.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-background px-4 py-3 text-center text-xs text-muted-foreground">
+            Nenhuma tag personalizada. Crie tags para classificar tarefas.
           </div>
         ) : (
-          <div className="space-y-4">
-            {tagGroups.map((group) => {
-              const isCollapsed = collapsedGroups[group.key ?? "__none__"] ?? false;
-              return (
-                <div key={group.key ?? "__none__"} className="space-y-2">
-                  <button
-                    onClick={() => toggleGroup(group.key ?? "__none__")}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 shadow-sm w-full text-left hover:bg-accent/50 transition"
-                  >
-                    {isCollapsed ? (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {group.color ? (
-                      <span className={`h-3 w-3 rounded-full shrink-0 ${group.color}`} />
-                    ) : (
-                      <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    )}
-                    <span className="text-sm font-semibold">{group.label}</span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground tabular-nums">
-                      {group.tasks.length}
-                    </span>
-                  </button>
-                  {!isCollapsed && (
-                    <div className="space-y-2 pl-2">
-                      {group.tasks.map((tarefa) => (
-                        <TarefaCard
-                          key={tarefa.id}
-                          tarefa={tarefa}
-                          allTasks={personalTasks}
-                          taskTags={taskTags}
-                          team={team}
-                          addStandaloneTask={addStandaloneTask}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  function TarefaCard({
-    tarefa,
-    allTasks,
-    taskTags,
-    team,
-    addStandaloneTask,
-  }: {
-    tarefa: PersonalTask;
-    allTasks: PersonalTask[];
-    taskTags: { id: string; label: string; color: string; isColumn?: boolean }[];
-    team: { id: string; name: string }[];
-    addStandaloneTask: (title: string, assigneeId: string, options?: { dueDate?: string; tagId?: string; parentId?: string }) => void;
-  }) {
-    const [subTitle, setSubTitle] = useState("");
-    const subs = allTasks.filter((t) => t.parentId === tarefa.id);
-    const tag = taskTags.find((t) => t.id === tarefa.tagId);
-
-    function handleAddSub() {
-      if (!subTitle.trim()) return;
-      addStandaloneTask(subTitle.trim(), tarefa.assigneeId || "", {
-        parentId: tarefa.id,
-      });
-      setSubTitle("");
-      toast.success("Sub-Tarefa adicionada.");
-    }
-
-    return (
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-semibold">{tarefa.title}</h4>
-              {tag && (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium text-white ${tag.color}`}
+          <div className="flex flex-wrap gap-2">
+            {customTags.map((tag) => (
+              <div
+                key={tag.id}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white ${tag.color}`}
+              >
+                {tag.label}
+                <button
+                  onClick={() => {
+                    if (confirm(`Remover tag "${tag.label}"?`)) {
+                      removeTaskTag(tag.id);
+                      toast.success("Tag removida.");
+                    }
+                  }}
+                  className="hover:text-red-200"
                 >
-                  {tag.label}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              {team.find((m) => m.id === tarefa.assigneeId)?.name && (
-                <span>Resp: {team.find((m) => m.id === tarefa.assigneeId)?.name}</span>
-              )}
-              {tarefa.dueDate && <span>Prazo: {tarefa.dueDate}</span>}
-              {tarefa.status === "concluida" && (
-                <span className="text-emerald-600">Concluida</span>
-              )}
-            </div>
-          </div>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium tabular-nums">
-            {subs.length} sub-tarefas
-          </span>
-        </div>
-
-        {subs.length > 0 && (
-          <ul className="mt-2 space-y-1 rounded-xl border border-border bg-background px-3 py-2">
-            {subs.map((sub) => (
-              <li key={sub.id} className="flex items-center justify-between text-xs">
-                <span
-                  className={
-                    sub.status === "concluida" ? "text-muted-foreground line-through" : ""
-                  }
-                >
-                  {sub.title}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {sub.status === "concluida"
-                    ? "Concluida"
-                    : sub.status === "em_processo"
-                      ? "Em processo"
-                      : "Nao iniciada"}
-                </span>
-              </li>
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
             ))}
-          </ul>
-        )}
-
-        {tarefa.status !== "concluida" && (
-          <div className="mt-2 flex items-center gap-2">
-            <Input
-              placeholder="Nova sub-tarefa..."
-              value={subTitle}
-              onChange={(e) => setSubTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddSub();
-                }
-              }}
-              className="h-8 rounded-full text-xs"
-            />
-            <Button
-              size="sm"
-              disabled={!subTitle.trim()}
-              onClick={handleAddSub}
-              className="h-8 rounded-full"
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
           </div>
         )}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Nova tag..."
+            value={newTagLabel}
+            onChange={(e) => setNewTagLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+            className="h-9 rounded-full flex-1 min-w-[180px]"
+          />
+          <div className="flex items-center gap-1.5">
+            {availableColors.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                title={c.label}
+                onClick={() => setNewTagColor(c.value)}
+                className={`h-7 w-7 rounded-full transition-all ${c.value} ${
+                  newTagColor === c.value
+                    ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                    : "hover:scale-110"
+                }`}
+              />
+            ))}
+          </div>
+          <Button disabled={!newTagLabel.trim()} onClick={handleAddTag} className="rounded-full">
+            <Plus className="h-4 w-4" /> Criar tag
+          </Button>
+        </div>
       </div>
-    );
+
+      {/* Criar Tarefa */}
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <h3 className="mb-3 text-sm font-semibold tracking-tight">Criar Tarefa</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Input
+            placeholder="Título da tarefa..."
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            className="rounded-full"
+          />
+          <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
+            <SelectTrigger className="h-9 rounded-full">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              {team.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="date"
+            placeholder="Data de entrega (opcional)"
+            value={newTaskDueDate}
+            onChange={(e) => setNewTaskDueDate(e.target.value)}
+            className="rounded-full"
+          />
+          <Select value={newTaskTagId} onValueChange={setNewTaskTagId}>
+            <SelectTrigger className="h-9 rounded-full">
+              <SelectValue placeholder="Tag (opcional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Sem tag</SelectItem>
+              {taskTags.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${t.color}`} />
+                    {t.label}
+                    {t.isColumn && (
+                      <span className="text-[10px] text-muted-foreground">(coluna)</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          disabled={!newTaskTitle.trim() || !newTaskAssignee}
+          onClick={handleAddTask}
+          className="mt-3 rounded-full"
+        >
+          <Plus className="h-4 w-4" /> Criar tarefa
+        </Button>
+      </div>
+
+      {/* Listar Tarefas + Sub-Tarefas */}
+      {tarefas.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <Weight className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+          <div className="text-sm font-medium">Nenhuma tarefa</div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {tagGroups.map((group) => {
+            const isCollapsed = collapsedGroups[group.key ?? "__none__"] ?? false;
+            return (
+              <div key={group.key ?? "__none__"} className="space-y-2">
+                <button
+                  onClick={() => toggleGroup(group.key ?? "__none__")}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 shadow-sm w-full text-left hover:bg-accent/50 transition"
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  {group.color ? (
+                    <span className={`h-3 w-3 rounded-full shrink-0 ${group.color}`} />
+                  ) : (
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-sm font-semibold">{group.label}</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground tabular-nums">
+                    {group.tasks.length}
+                  </span>
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-2 pl-2">
+                    {group.tasks.map((tarefa) => (
+                      <TarefaCard
+                        key={tarefa.id}
+                        tarefa={tarefa}
+                        allTasks={personalTasks}
+                        taskTags={taskTags}
+                        team={team}
+                        addStandaloneTask={addStandaloneTask}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TarefaCard({
+  tarefa,
+  allTasks,
+  taskTags,
+  team,
+  addStandaloneTask,
+}: {
+  tarefa: PersonalTask;
+  allTasks: PersonalTask[];
+  taskTags: { id: string; label: string; color: string; isColumn?: boolean }[];
+  team: { id: string; name: string }[];
+  addStandaloneTask: (
+    title: string,
+    assigneeId: string,
+    options?: { dueDate?: string; tagId?: string; parentId?: string },
+  ) => void;
+}) {
+  const [subTitle, setSubTitle] = useState("");
+  const subs = allTasks.filter((t) => t.parentId === tarefa.id);
+  const tag = taskTags.find((t) => t.id === tarefa.tagId);
+
+  function handleAddSub() {
+    if (!subTitle.trim()) return;
+    addStandaloneTask(subTitle.trim(), tarefa.assigneeId || "", {
+      parentId: tarefa.id,
+    });
+    setSubTitle("");
+    toast.success("Sub-Tarefa adicionada.");
   }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold">{tarefa.title}</h4>
+            {tag && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium text-white ${tag.color}`}
+              >
+                {tag.label}
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+            {team.find((m) => m.id === tarefa.assigneeId)?.name && (
+              <span>Resp: {team.find((m) => m.id === tarefa.assigneeId)?.name}</span>
+            )}
+            {tarefa.dueDate && <span>Prazo: {tarefa.dueDate}</span>}
+            {tarefa.status === "concluida" && <span className="text-emerald-600">Concluida</span>}
+          </div>
+        </div>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium tabular-nums">
+          {subs.length} sub-tarefas
+        </span>
+      </div>
+
+      {subs.length > 0 && (
+        <ul className="mt-2 space-y-1 rounded-xl border border-border bg-background px-3 py-2">
+          {subs.map((sub) => (
+            <li key={sub.id} className="flex items-center justify-between text-xs">
+              <span
+                className={sub.status === "concluida" ? "text-muted-foreground line-through" : ""}
+              >
+                {sub.title}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {sub.status === "concluida"
+                  ? "Concluida"
+                  : sub.status === "em_processo"
+                    ? "Em processo"
+                    : "Nao iniciada"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tarefa.status !== "concluida" && (
+        <div className="mt-2 flex items-center gap-2">
+          <Input
+            placeholder="Nova sub-tarefa..."
+            value={subTitle}
+            onChange={(e) => setSubTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddSub();
+              }
+            }}
+            className="h-8 rounded-full text-xs"
+          />
+          <Button
+            size="sm"
+            disabled={!subTitle.trim()}
+            onClick={handleAddSub}
+            className="h-8 rounded-full"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

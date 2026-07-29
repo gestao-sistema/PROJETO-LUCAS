@@ -354,6 +354,7 @@ interface State {
   removeColaborador: (id: string) => Promise<void>;
   // Templates
   setTemplate: (stageId: string, items: TaskTemplateItem[]) => void;
+  commitTemplate: (stageId: string) => void;
   reorderTemplateItems: (stageId: string, fromIdx: number, toIdx: number) => void;
   // Lotes
   moveStage: (id: string, nextStage: string, who?: string) => void;
@@ -495,8 +496,14 @@ export const useStore = create<State>()((set, get) => ({
 
     const tagId = `tag-col-${id}`;
     const colColors = [
-      "bg-slate-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500",
-      "bg-violet-500", "bg-rose-500", "bg-cyan-500", "bg-orange-500",
+      "bg-slate-500",
+      "bg-blue-500",
+      "bg-emerald-500",
+      "bg-amber-500",
+      "bg-violet-500",
+      "bg-rose-500",
+      "bg-cyan-500",
+      "bg-orange-500",
     ];
     const tagColor = colColors[get().columns.length % colColors.length];
 
@@ -719,11 +726,14 @@ export const useStore = create<State>()((set, get) => ({
   // === Templates ===
   setTemplate: (stageId, items) => {
     set((s) => ({ templates: { ...s.templates, [stageId]: items } }));
+  },
+
+  commitTemplate: (stageId) => {
+    const items = get().templates[stageId] ?? [];
     supabase
       .from("task_templates")
       .upsert({ stage: stageId, items }, { onConflict: "stage" })
       .then(({ error }) => dbError(error));
-    // BUG FIX: aplicar template retroativamente aos lotes existentes
     get().applyTemplatesRetroactively(stageId);
   },
 
@@ -747,12 +757,14 @@ export const useStore = create<State>()((set, get) => ({
           const tpls = templates[col.id] ?? [];
           // Reaplicar apenas templates que ainda não existem como task neste lote+coluna.
           const existingTitles = new Set(
-            o.tasks.filter((t) => t.stage === col.id && !t.parentId).map((t) => t.title),
+            o.tasks
+              .filter((t) => t.stage === col.id && !t.parentId)
+              .map((t) => t.title.trim().toLowerCase()),
           );
           const additions: BatchTask[] = [];
           for (let i = 0; i < tpls.length; i++) {
             const tpl = tpls[i];
-            if (existingTitles.has(tpl.title)) continue;
+            if (existingTitles.has(tpl.title.trim().toLowerCase())) continue;
             additions.push({
               id: `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
               title: tpl.title,
@@ -1073,7 +1085,7 @@ export const useStore = create<State>()((set, get) => ({
 
   addTask: (orderId, title, stage, assigneeId, weight = 1, dueDate) => {
     const task: BatchTask = {
-      id: `t-manual-${Date.now()}`,
+      id: `t-manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       title,
       stage,
       done: false,
