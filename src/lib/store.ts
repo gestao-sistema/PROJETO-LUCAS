@@ -748,16 +748,37 @@ export const useStore = create<State>()((set, get) => ({
     const today = new Date().toISOString().slice(0, 10);
     const touched: PurchaseOrder[] = [];
 
+    function dedupTasks(tasks: BatchTask[]): BatchTask[] {
+      const byStage = new Map<string, BatchTask[]>();
+      for (const t of tasks) {
+        const arr = byStage.get(t.stage) ?? [];
+        arr.push(t);
+        byStage.set(t.stage, arr);
+      }
+      const result: BatchTask[] = [];
+      for (const [, stageTasks] of byStage) {
+        const seen = new Map<string, BatchTask>();
+        for (const t of stageTasks) {
+          const key = t.title.trim().toLowerCase();
+          const existing = seen.get(key);
+          if (!existing || (t.done && !existing.done) || t.id.length > existing.id.length) {
+            seen.set(key, t);
+          }
+        }
+        result.push(...seen.values());
+      }
+      return result;
+    }
+
     set((s) => ({
       orders: s.orders.map((o) => {
         if (o.currentStage === DONE_STAGE_ID) return o;
-        let nextTasks = o.tasks;
+        let nextTasks = dedupTasks(o.tasks);
         for (const col of cols) {
           if (col.isFinalizado) continue;
           const tpls = templates[col.id] ?? [];
-          // Reaplicar apenas templates que ainda não existem como task neste lote+coluna.
           const existingTitles = new Set(
-            o.tasks
+            nextTasks
               .filter((t) => t.stage === col.id && !t.parentId)
               .map((t) => t.title.trim().toLowerCase()),
           );
@@ -777,7 +798,6 @@ export const useStore = create<State>()((set, get) => ({
             });
           }
           if (additions.length > 0) {
-            if (nextTasks === o.tasks) nextTasks = [...o.tasks];
             nextTasks = [...nextTasks, ...additions];
           }
         }

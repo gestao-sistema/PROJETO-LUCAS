@@ -1285,10 +1285,39 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
     return team.find((m) => m.email === profile.email)?.id ?? "";
   }, [isRestricted, profile, team]);
 
+  const dedupedTasks = useMemo(() => {
+    const byStage = new Map<string, typeof order.tasks>();
+    for (const t of order.tasks) {
+      const arr = byStage.get(t.stage) ?? [];
+      arr.push(t);
+      byStage.set(t.stage, arr);
+    }
+    const result: typeof order.tasks = [];
+    for (const [, tasks] of byStage) {
+      const seen = new Map<string, (typeof order.tasks)[0]>();
+      for (const t of tasks) {
+        const key = t.title.trim().toLowerCase();
+        const existing = seen.get(key);
+        if (!existing || t.id.length > existing.id.length) {
+          if (existing) {
+            const idx = result.indexOf(existing);
+            if (idx >= 0) result[idx] = t;
+          }
+          seen.set(key, t);
+        }
+      }
+      for (const t of seen.values()) {
+        if (!result.includes(t)) result.push(t);
+      }
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.tasks]);
+
   const grouped = columns
     .map((c) => ({
       column: c,
-      items: order.tasks.filter((t) => t.stage === c.id),
+      items: dedupedTasks.filter((t) => t.stage === c.id),
     }))
     .filter((g) => g.items.length > 0);
 
