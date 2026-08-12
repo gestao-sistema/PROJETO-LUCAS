@@ -870,7 +870,9 @@ function PersonalView({
   const storePersonalTasks = useStore((s) => s.personalTasks);
   const taskTags = useStore((s) => s.taskTags);
 
-  const [selectedMemberId, setSelectedMemberId] = useState(team[0]?.id ?? "");
+  const [selectedMemberId, setSelectedMemberId] = useState(
+    isRestricted ? (profile?.id ?? "") : (team[0]?.id ?? ""),
+  );
   const now = new Date();
   const [startDate, setStartDate] = useState(() =>
     new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10),
@@ -895,10 +897,14 @@ function PersonalView({
   );
 
   useEffect(() => {
+    if (isRestricted) {
+      if (profile?.id && selectedMemberId !== profile.id) setSelectedMemberId(profile.id);
+      return;
+    }
     if (!team.some((m) => m.id === selectedMemberId)) {
       setSelectedMemberId(team[0]?.id ?? "");
     }
-  }, [team, selectedMemberId]);
+  }, [team, selectedMemberId, isRestricted, profile?.id]);
 
   const doneId = DONE_STAGE_ID;
 
@@ -1194,7 +1200,11 @@ function PersonalView({
   return (
     <section className="mb-8 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+        <Select
+          value={selectedMemberId}
+          onValueChange={setSelectedMemberId}
+          disabled={isRestricted}
+        >
           <SelectTrigger className="w-full max-w-xs">
             <SelectValue placeholder="Selecionar colaborador" />
           </SelectTrigger>
@@ -1846,6 +1856,7 @@ function PersonalTaskDetailDialog({
 }) {
   const setStandaloneTaskNotes = useStore((s) => s.setStandaloneTaskNotes);
   const setStandaloneTaskLinks = useStore((s) => s.setStandaloneTaskLinks);
+  const setStandaloneTaskTitle = useStore((s) => s.setStandaloneTaskTitle);
   const addStandaloneTask = useStore((s) => s.addStandaloneTask);
   const removeStandaloneTask = useStore((s) => s.removeStandaloneTask);
   const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
@@ -1864,11 +1875,26 @@ function PersonalTaskDetailDialog({
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newSubtask, setNewSubtask] = useState("");
+  const [titleDraft, setTitleDraft] = useState("");
 
   // Sincroniza rascunho de anotações quando a tarefa muda/abre
   useEffect(() => {
     setNotesDraft(task?.notes ?? "");
   }, [task?.id, task?.notes]);
+
+  // Sincroniza rascunho do título quando a tarefa muda/abre
+  useEffect(() => {
+    setTitleDraft(task?.title ?? "");
+  }, [task?.id, task?.title]);
+
+  function saveTitle() {
+    if (!task) return;
+    if (titleDraft.trim() && titleDraft !== task.title) {
+      setStandaloneTaskTitle(task.id, titleDraft);
+    } else {
+      setTitleDraft(task.title);
+    }
+  }
 
   if (!task) return null;
 
@@ -1918,7 +1944,23 @@ function PersonalTaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="pr-6">{task.title}</DialogTitle>
+          {canManage(task.createdBy, task.assigneeId) ? (
+            <Input
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if (e.key === "Escape") {
+                  setTitleDraft(task.title);
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              className="h-8 border-none bg-transparent px-0 text-lg font-semibold tracking-tight shadow-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          ) : (
+            <DialogTitle className="pr-6">{task.title}</DialogTitle>
+          )}
           <span
             className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
               task.status === "concluida"

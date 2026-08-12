@@ -416,6 +416,7 @@ interface State {
   setStandaloneTaskTag: (id: string, tagId?: string) => void;
   setStandaloneTaskNotes: (id: string, notes: string) => void;
   setStandaloneTaskLinks: (id: string, links: TaskLink[]) => void;
+  setStandaloneTaskTitle: (id: string, title: string) => void;
   removeTask: (orderId: string, taskId: string) => void;
   setSharepointUrl: (id: string, url: string) => void;
   // Task tags
@@ -1320,6 +1321,19 @@ export const useStore = create<State>()((set, get) => ({
     supabase
       .from("personal_tasks")
       .update({ links })
+      .eq("id", id)
+      .then(({ error }) => dbError(error));
+  },
+
+  setStandaloneTaskTitle: (id, title) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    set((s) => ({
+      personalTasks: s.personalTasks.map((t) => (t.id === id ? { ...t, title: trimmed } : t)),
+    }));
+    supabase
+      .from("personal_tasks")
+      .update({ title: trimmed })
       .eq("id", id)
       .then(({ error }) => dbError(error));
   },
