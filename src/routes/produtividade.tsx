@@ -1122,6 +1122,7 @@ function PersonalView({
     addStandaloneTask(newTaskTitle.trim(), selectedMemberId, {
       dueDate: newTaskDueDate || undefined,
       tagId: newTaskTagId || undefined,
+      createdBy: profile?.id,
     });
     setNewTaskTitle("");
     setNewTaskDueDate("");
