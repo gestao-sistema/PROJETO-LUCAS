@@ -1253,14 +1253,19 @@ export const useStore = create<State>()((set, get) => ({
   },
 
   removeStandaloneTask: (id) => {
-    // Remove mãe + sub-tarefas via cascade FK
+    // Coleta mãe + sub-tarefas ANTES de filtrar o estado (otimista + DB em paralelo)
+    const subIds = get()
+      .personalTasks.filter((t) => t.parentId === id)
+      .map((t) => t.id);
+    const idsToDelete = [id, ...subIds];
+
     set((s) => ({
-      personalTasks: s.personalTasks.filter((t) => t.id !== id && t.parentId !== id),
+      personalTasks: s.personalTasks.filter((t) => !idsToDelete.includes(t.id)),
     }));
     supabase
       .from("personal_tasks")
       .delete()
-      .eq("id", id)
+      .in("id", idsToDelete)
       .then(({ error }) => dbError(error));
   },
 

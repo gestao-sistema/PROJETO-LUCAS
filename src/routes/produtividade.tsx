@@ -1806,6 +1806,7 @@ function SortablePersonalTask({
           {"_standalone" in task &&
             task._standalone &&
             (task.createdBy === currentUserId ||
+              (!task.createdBy && task.assigneeId === currentUserId) ||
               userRole === "Admin" ||
               userRole === "Gerente" ||
               userRole === "Coordenador") && (
@@ -1852,8 +1853,12 @@ function PersonalTaskDetailDialog({
   const profile = useProfile((s) => s.profile);
   const currentUserId = profile?.id;
   const role = (profile?.role ?? "Auxiliar") as Cargo;
-  const canManage = (ownerId?: string) =>
-    ownerId === currentUserId || role === "Admin" || role === "Gerente" || role === "Coordenador";
+  const canManage = (ownerId?: string, fallbackId?: string) =>
+    ownerId === currentUserId ||
+    (!ownerId && fallbackId === currentUserId) ||
+    role === "Admin" ||
+    role === "Gerente" ||
+    role === "Coordenador";
 
   const [notesDraft, setNotesDraft] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
@@ -2033,7 +2038,7 @@ function PersonalTaskDetailDialog({
                     >
                       {sub.title}
                     </span>
-                    {canManage(sub.createdBy) && (
+                    {canManage(sub.createdBy, sub.assigneeId) && (
                       <button
                         onClick={() => removeStandaloneTask(sub.id)}
                         className="shrink-0 text-muted-foreground hover:text-red-500"
