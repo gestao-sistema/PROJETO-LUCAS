@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import type { TaskWeight, TaskStatus, BatchTask, PersonalTask, TaskLink, Cargo } from "@/lib/store";
-import { useStore, findMember, DONE_STAGE_ID } from "@/lib/store";
+import { useStore, findMember, findMemberByEmail, DONE_STAGE_ID } from "@/lib/store";
 import { useProfile } from "@/lib/profile";
 import { Avatar } from "./pedidos";
 import {
@@ -870,8 +870,11 @@ function PersonalView({
   const storePersonalTasks = useStore((s) => s.personalTasks);
   const taskTags = useStore((s) => s.taskTags);
 
+  const currentMember = findMemberByEmail(profile?.email, team) ?? findMember(profile?.id, team);
+  const currentMemberId = currentMember?.id ?? profile?.id ?? "";
+
   const [selectedMemberId, setSelectedMemberId] = useState(
-    isRestricted ? (profile?.id ?? "") : (team[0]?.id ?? ""),
+    isRestricted ? currentMemberId : (team[0]?.id ?? ""),
   );
   const now = new Date();
   const [startDate, setStartDate] = useState(() =>
@@ -898,13 +901,13 @@ function PersonalView({
 
   useEffect(() => {
     if (isRestricted) {
-      if (profile?.id && selectedMemberId !== profile.id) setSelectedMemberId(profile.id);
+      if (currentMemberId && selectedMemberId !== currentMemberId) setSelectedMemberId(currentMemberId);
       return;
     }
     if (!team.some((m) => m.id === selectedMemberId)) {
       setSelectedMemberId(team[0]?.id ?? "");
     }
-  }, [team, selectedMemberId, isRestricted, profile?.id]);
+  }, [team, selectedMemberId, isRestricted, currentMemberId]);
 
   const doneId = DONE_STAGE_ID;
 
@@ -1128,7 +1131,7 @@ function PersonalView({
     addStandaloneTask(newTaskTitle.trim(), selectedMemberId, {
       dueDate: newTaskDueDate || undefined,
       tagId: newTaskTagId || undefined,
-      createdBy: profile?.id,
+      createdBy: currentMemberId,
     });
     setNewTaskTitle("");
     setNewTaskDueDate("");
@@ -1391,7 +1394,7 @@ function PersonalView({
                   onToggle={handleToggle}
                   onDelete={removeStandaloneTask}
                   onOpenDetail={handleOpenDetail}
-                  currentUserId={profile?.id}
+                  currentUserId={currentMemberId}
                   userRole={role}
                   formatTime={formatTime}
                 />
@@ -1862,11 +1865,13 @@ function PersonalTaskDetailDialog({
   const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
 
   const profile = useProfile((s) => s.profile);
-  const currentUserId = profile?.id;
+  const team = useStore((s) => s.team);
+  const currentMember = findMemberByEmail(profile?.email, team) ?? findMember(profile?.id, team);
+  const currentMemberId = currentMember?.id ?? profile?.id;
   const role = (profile?.role ?? "Auxiliar") as Cargo;
   const canManage = (ownerId?: string, fallbackId?: string) =>
-    ownerId === currentUserId ||
-    (!ownerId && fallbackId === currentUserId) ||
+    ownerId === currentMemberId ||
+    (!ownerId && fallbackId === currentMemberId) ||
     role === "Admin" ||
     role === "Gerente" ||
     role === "Coordenador";
@@ -1931,7 +1936,7 @@ function PersonalTaskDetailDialog({
     if (!title) return;
     addStandaloneTask(title, task.assigneeId ?? "", {
       parentId: task.id,
-      createdBy: currentUserId,
+      createdBy: currentMemberId,
     });
     setNewSubtask("");
   }

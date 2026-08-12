@@ -1424,4 +1424,10 @@ export function findMember(id: string | undefined, team: TeamMember[]): TeamMemb
   return team.find((m) => m.id === id);
 }
 
+export function findMemberByEmail(email: string | undefined, team: TeamMember[]): TeamMember | undefined {
+  if (!email) return undefined;
+  const normalized = email.trim().toLowerCase();
+  return team.find((m) => m.email?.trim().toLowerCase() === normalized);
+}
+
 export type Stage = string;
