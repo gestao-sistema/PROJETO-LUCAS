@@ -251,25 +251,27 @@ function SectorView({
         _standalone: false as const,
       })),
     );
-    const personalTasks = storePersonalTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      stage: "_personal",
-      done: t.status === "concluida",
-      status: t.status,
-      assigneeId: t.assigneeId,
-      weight: t.weight,
-      createdAt: t.createdAt.slice(0, 10),
-      startedAt: t.startedAt,
-      completedAt: t.completedAt,
-      paused: t.paused,
-      orderId: "",
-      orderCode: "Pessoal",
-      supplier: "",
-      orderPriority: false,
-      columnLabel: "Tarefa pessoal",
-      _standalone: true as const,
-    }));
+    const personalTasks = storePersonalTasks
+      .filter((t) => !t.parentId) // subtarefas não pontuam nem aparecem no setor
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        stage: "_personal",
+        done: t.status === "concluida",
+        status: t.status,
+        assigneeId: t.assigneeId,
+        weight: t.weight,
+        createdAt: t.createdAt.slice(0, 10),
+        startedAt: t.startedAt,
+        completedAt: t.completedAt,
+        paused: t.paused,
+        orderId: "",
+        orderCode: "Pessoal",
+        supplier: "",
+        orderPriority: false,
+        columnLabel: "Tarefa pessoal",
+        _standalone: true as const,
+      }));
     return [...orderTasks, ...personalTasks];
   }, [orders, columns, storePersonalTasks]);
 
