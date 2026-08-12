@@ -273,6 +273,8 @@ function mapPersonalTask(row: Record<string, unknown>): PersonalTask {
     parentId: (row.parent_id as string) ?? undefined,
     tagId: (row.tag_id as string) ?? undefined,
     dueDate: (row.due_date as string) ?? undefined,
+    notes: (row.notes as string) ?? undefined,
+    links: (row.links as TaskLink[]) ?? [],
   };
 }
 
@@ -307,6 +309,11 @@ function dbError(error: unknown) {
 }
 
 // === Store ===
+export interface TaskLink {
+  title: string;
+  url: string;
+}
+
 export interface PersonalTask {
   id: string;
   title: string;
@@ -321,6 +328,8 @@ export interface PersonalTask {
   parentId?: string; // se definido, esta tarefa é sub-tarefa
   tagId?: string; // tag de origem
   dueDate?: string; // data de entrega (opcional)
+  notes?: string; // anotações livres
+  links?: TaskLink[]; // links anexados { title, url }
 }
 
 interface State {
@@ -405,6 +414,8 @@ interface State {
   setStandaloneTaskAssignee: (id: string, assigneeId: string | undefined) => void;
   setStandaloneTaskDueDate: (id: string, dueDate?: string) => void;
   setStandaloneTaskTag: (id: string, tagId?: string) => void;
+  setStandaloneTaskNotes: (id: string, notes: string) => void;
+  setStandaloneTaskLinks: (id: string, links: TaskLink[]) => void;
   removeTask: (orderId: string, taskId: string) => void;
   setSharepointUrl: (id: string, url: string) => void;
   // Task tags
@@ -1280,6 +1291,28 @@ export const useStore = create<State>()((set, get) => ({
     supabase
       .from("personal_tasks")
       .update({ tag_id: tagId ?? null })
+      .eq("id", id)
+      .then(({ error }) => dbError(error));
+  },
+
+  setStandaloneTaskNotes: (id, notes) => {
+    set((s) => ({
+      personalTasks: s.personalTasks.map((t) => (t.id === id ? { ...t, notes } : t)),
+    }));
+    supabase
+      .from("personal_tasks")
+      .update({ notes: notes || null })
+      .eq("id", id)
+      .then(({ error }) => dbError(error));
+  },
+
+  setStandaloneTaskLinks: (id, links) => {
+    set((s) => ({
+      personalTasks: s.personalTasks.map((t) => (t.id === id ? { ...t, links } : t)),
+    }));
+    supabase
+      .from("personal_tasks")
+      .update({ links })
       .eq("id", id)
       .then(({ error }) => dbError(error));
   },

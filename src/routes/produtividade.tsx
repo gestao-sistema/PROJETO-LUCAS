@@ -17,6 +17,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -25,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import type { TaskWeight, TaskStatus, BatchTask, PersonalTask, Cargo } from "@/lib/store";
+import type { TaskWeight, TaskStatus, BatchTask, PersonalTask, TaskLink, Cargo } from "@/lib/store";
 import { useStore, findMember, DONE_STAGE_ID } from "@/lib/store";
 import { useProfile } from "@/lib/profile";
 import { Avatar } from "./pedidos";
@@ -46,6 +49,11 @@ import {
   Search as SearchIcon,
   UserPlus,
   AlertTriangle,
+  Link2,
+  ListTodo,
+  StickyNote,
+  X,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/produtividade")({
@@ -873,6 +881,7 @@ function PersonalView({
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
   const [newTaskTagId, setNewTaskTagId] = useState("");
   const [activeTask, setActiveTask] = useState<EnrichedTask | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [personalView, setPersonalView] = useState<"kanban" | "lista">("kanban");
   const [listaPage, setListaPage] = useState(1);
   const [listaSearch, setListaSearch] = useState("");
@@ -1143,6 +1152,17 @@ function PersonalView({
     }
   }
 
+  function handleOpenDetail(task: EnrichedTask) {
+    // Só tarefas pessoais (standalone) têm modal de detalhamento
+    if ("_standalone" in task && task._standalone) {
+      setDetailTaskId(task.id);
+    }
+  }
+
+  const detailTask = detailTaskId
+    ? (storePersonalTasks.find((t) => t.id === detailTaskId) ?? null)
+    : null;
+
   function formatTime(startedAt?: string, completedAt?: string, paused?: boolean): string {
     if (!startedAt) return "—";
     const start = new Date(startedAt).getTime();
@@ -1355,6 +1375,7 @@ function PersonalView({
                   onPause={handlePause}
                   onToggle={handleToggle}
                   onDelete={removeStandaloneTask}
+                  onOpenDetail={handleOpenDetail}
                   currentUserId={profile?.id}
                   userRole={role}
                   formatTime={formatTime}
@@ -1490,6 +1511,15 @@ function PersonalView({
           />
         </div>
       )}
+
+      <PersonalTaskDetailDialog
+        task={detailTask}
+        open={detailTaskId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDetailTaskId(null);
+        }}
+        subtasks={storePersonalTasks.filter((t) => t.parentId === detailTaskId)}
+      />
     </section>
   );
 }
@@ -1506,6 +1536,7 @@ function StatusBox({
   onPause,
   onToggle,
   onDelete,
+  onOpenDetail,
   currentUserId,
   userRole,
   formatTime,
@@ -1521,6 +1552,7 @@ function StatusBox({
   onPause: (orderId: string, taskId: string, paused: boolean) => void;
   onToggle: (orderId: string, taskId: string) => void;
   onDelete: (id: string) => void;
+  onOpenDetail: (task: EnrichedTask) => void;
   currentUserId?: string;
   userRole?: string;
   formatTime: (startedAt?: string, completedAt?: string, paused?: boolean) => string;
@@ -1562,6 +1594,7 @@ function StatusBox({
                 onPause={onPause}
                 onToggle={onToggle}
                 onDelete={onDelete}
+                onOpenDetail={onOpenDetail}
                 currentUserId={currentUserId}
                 userRole={userRole}
                 formatTime={formatTime}
@@ -1609,6 +1642,7 @@ function StatusBox({
                     onPause={onPause}
                     onToggle={onToggle}
                     onDelete={onDelete}
+                    onOpenDetail={onOpenDetail}
                     currentUserId={currentUserId}
                     userRole={userRole}
                     formatTime={formatTime}
@@ -1632,6 +1666,7 @@ function SortablePersonalTask({
   onPause,
   onToggle,
   onDelete,
+  onOpenDetail,
   currentUserId,
   userRole,
   formatTime,
@@ -1644,6 +1679,7 @@ function SortablePersonalTask({
   onPause: (orderId: string, taskId: string, paused: boolean) => void;
   onToggle: (orderId: string, taskId: string) => void;
   onDelete: (id: string) => void;
+  onOpenDetail: (task: EnrichedTask) => void;
   currentUserId?: string;
   userRole?: string;
   formatTime: (startedAt?: string, completedAt?: string, paused?: boolean) => string;
@@ -1689,46 +1725,55 @@ function SortablePersonalTask({
           checked={status === "concluida"}
           onCheckedChange={() => onToggle(task.orderId, task.id)}
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className={`truncate text-sm font-medium`}>{task.title}</span>
-            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {task.orderCode}
-            </span>
-            {task.tagLabel && task.tagColor && (
-              <span
-                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${task.tagColor}`}
-              >
-                {task.tagLabel}
-              </span>
-            )}
-            {isOverdue && (
-              <span className="shrink-0 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                Em Atraso
-              </span>
-            )}
-          </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span>{task.columnLabel}</span>
-            {task.startedAt && (
-              <span className="flex items-center gap-1 text-foreground">
-                <Clock className="h-3 w-3" />
-                {formatTime(task.startedAt, task.completedAt, task.paused)}
-              </span>
-            )}
-            {task.dueDate && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {task.dueDate}
-              </span>
-            )}
-            {task.paused && status === "em_processo" && (
-              <span className="flex items-center gap-1 text-amber-500">
-                <Pause className="h-3 w-3" /> Pausado
-              </span>
-            )}
-          </div>
-        </div>
+        {(() => {
+          const isStandalone = "_standalone" in task && task._standalone;
+          return (
+            <div
+              className={`min-w-0 flex-1 ${isStandalone ? "cursor-pointer" : ""}`}
+              onClick={isStandalone ? () => onOpenDetail(task) : undefined}
+              title={isStandalone ? "Ver detalhes" : undefined}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`truncate text-sm font-medium`}>{task.title}</span>
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {task.orderCode}
+                </span>
+                {task.tagLabel && task.tagColor && (
+                  <span
+                    className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${task.tagColor}`}
+                  >
+                    {task.tagLabel}
+                  </span>
+                )}
+                {isOverdue && (
+                  <span className="shrink-0 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    Em Atraso
+                  </span>
+                )}
+              </div>
+              <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span>{task.columnLabel}</span>
+                {task.startedAt && (
+                  <span className="flex items-center gap-1 text-foreground">
+                    <Clock className="h-3 w-3" />
+                    {formatTime(task.startedAt, task.completedAt, task.paused)}
+                  </span>
+                )}
+                {task.dueDate && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {task.dueDate}
+                  </span>
+                )}
+                {task.paused && status === "em_processo" && (
+                  <span className="flex items-center gap-1 text-amber-500">
+                    <Pause className="h-3 w-3" /> Pausado
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
       {status !== "concluida" && (
         <div className="flex items-center gap-2 pl-9">
@@ -1771,6 +1816,241 @@ function SortablePersonalTask({
         </div>
       )}
     </li>
+  );
+}
+
+/* ============== PERSONAL TASK DETAIL DIALOG ============== */
+
+const STATUS_LABEL: Record<TaskStatus, string> = {
+  nao_iniciada: "Não Iniciada",
+  em_processo: "Em Processo",
+  concluida: "Concluída",
+};
+
+function PersonalTaskDetailDialog({
+  task,
+  open,
+  onOpenChange,
+  subtasks,
+}: {
+  task: PersonalTask | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subtasks: PersonalTask[];
+}) {
+  const setStandaloneTaskNotes = useStore((s) => s.setStandaloneTaskNotes);
+  const setStandaloneTaskLinks = useStore((s) => s.setStandaloneTaskLinks);
+  const addStandaloneTask = useStore((s) => s.addStandaloneTask);
+  const removeStandaloneTask = useStore((s) => s.removeStandaloneTask);
+  const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
+
+  const [notesDraft, setNotesDraft] = useState("");
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [newSubtask, setNewSubtask] = useState("");
+
+  // Sincroniza rascunho de anotações quando a tarefa muda/abre
+  useEffect(() => {
+    setNotesDraft(task?.notes ?? "");
+  }, [task?.id, task?.notes]);
+
+  if (!task) return null;
+
+  const links = task.links ?? [];
+
+  function saveNotes() {
+    if (!task) return;
+    if (notesDraft !== (task.notes ?? "")) {
+      setStandaloneTaskNotes(task.id, notesDraft);
+    }
+  }
+
+  function addLink() {
+    if (!task) return;
+    const url = newLinkUrl.trim();
+    if (!url) return;
+    const title = newLinkTitle.trim() || url;
+    setStandaloneTaskLinks(task.id, [...links, { title, url }]);
+    setNewLinkTitle("");
+    setNewLinkUrl("");
+  }
+
+  function removeLink(idx: number) {
+    if (!task) return;
+    setStandaloneTaskLinks(
+      task.id,
+      links.filter((_, i) => i !== idx),
+    );
+  }
+
+  function addSubtask() {
+    if (!task) return;
+    const title = newSubtask.trim();
+    if (!title) return;
+    addStandaloneTask(title, task.assigneeId ?? "", { parentId: task.id });
+    setNewSubtask("");
+  }
+
+  function normalizeUrl(url: string) {
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="pr-6">{task.title}</DialogTitle>
+          <span
+            className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+              task.status === "concluida"
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                : task.status === "em_processo"
+                  ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                  : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {STATUS_LABEL[task.status]}
+          </span>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* ANOTAÇÕES */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <StickyNote className="h-3.5 w-3.5" /> Anotações
+            </Label>
+            <Textarea
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              onBlur={saveNotes}
+              placeholder="Escreva anotações sobre esta atividade..."
+              rows={4}
+              className="resize-y"
+            />
+          </div>
+
+          {/* LINKS */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Link2 className="h-3.5 w-3.5" /> Links
+            </Label>
+            {links.length > 0 && (
+              <ul className="space-y-1.5">
+                {links.map((link, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    <a
+                      href={normalizeUrl(link.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{link.title}</span>
+                    </a>
+                    <button
+                      onClick={() => removeLink(i)}
+                      className="shrink-0 text-muted-foreground hover:text-red-500"
+                      aria-label="Remover link"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={newLinkTitle}
+                onChange={(e) => setNewLinkTitle(e.target.value)}
+                placeholder="Título (opcional)"
+                className="sm:w-40"
+              />
+              <Input
+                value={newLinkUrl}
+                onChange={(e) => setNewLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addLink();
+                  }
+                }}
+                placeholder="https://..."
+                className="flex-1"
+              />
+              <Button variant="outline" disabled={!newLinkUrl.trim()} onClick={addLink}>
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+          </div>
+
+          {/* SUBTAREFAS */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <ListTodo className="h-3.5 w-3.5" /> Subtarefas
+              {subtasks.length > 0 && (
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">
+                  {subtasks.filter((s) => s.status === "concluida").length}/{subtasks.length}
+                </span>
+              )}
+            </Label>
+            {subtasks.length > 0 && (
+              <ul className="space-y-1.5">
+                {subtasks.map((sub) => (
+                  <li
+                    key={sub.id}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    <Checkbox
+                      checked={sub.status === "concluida"}
+                      onCheckedChange={() =>
+                        setStandaloneTaskStatus(
+                          sub.id,
+                          sub.status === "concluida" ? "nao_iniciada" : "concluida",
+                        )
+                      }
+                    />
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm ${
+                        sub.status === "concluida" ? "text-muted-foreground line-through" : ""
+                      }`}
+                    >
+                      {sub.title}
+                    </span>
+                    <button
+                      onClick={() => removeStandaloneTask(sub.id)}
+                      className="shrink-0 text-muted-foreground hover:text-red-500"
+                      aria-label="Remover subtarefa"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={newSubtask}
+                onChange={(e) => setNewSubtask(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSubtask();
+                  }
+                }}
+                placeholder="Nova subtarefa..."
+                className="flex-1"
+              />
+              <Button variant="outline" disabled={!newSubtask.trim()} onClick={addSubtask}>
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
