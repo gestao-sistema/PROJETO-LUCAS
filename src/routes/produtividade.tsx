@@ -91,6 +91,7 @@ type EnrichedTask = BatchTask & {
   tagLabel?: string;
   tagColor?: string;
   dueDate?: string;
+  createdBy?: string;
 };
 
 function ProdutividadePage() {
@@ -952,8 +953,11 @@ function PersonalView({
             dueDate: t.dueDate,
             parentId: t.parentId,
             tagId: t.tagId,
+            createdBy: t.createdBy,
           };
-        }),
+        })
+        // Subtarefas ficam encapsuladas no modal de detalhes — não viram card no board
+        .filter((t) => !t.parentId),
     [storePersonalTasks, selectedMemberId, taskTags],
   );
 
@@ -1800,7 +1804,7 @@ function SortablePersonalTask({
           )}
           {"_standalone" in task &&
             task._standalone &&
-            (task.assigneeId === currentUserId ||
+            (task.createdBy === currentUserId ||
               userRole === "Admin" ||
               userRole === "Gerente" ||
               userRole === "Coordenador") && (
@@ -1843,6 +1847,12 @@ function PersonalTaskDetailDialog({
   const addStandaloneTask = useStore((s) => s.addStandaloneTask);
   const removeStandaloneTask = useStore((s) => s.removeStandaloneTask);
   const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
+
+  const profile = useProfile((s) => s.profile);
+  const currentUserId = profile?.id;
+  const role = (profile?.role ?? "Auxiliar") as Cargo;
+  const canManage = (ownerId?: string) =>
+    ownerId === currentUserId || role === "Admin" || role === "Gerente" || role === "Coordenador";
 
   const [notesDraft, setNotesDraft] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
@@ -1887,7 +1897,10 @@ function PersonalTaskDetailDialog({
     if (!task) return;
     const title = newSubtask.trim();
     if (!title) return;
-    addStandaloneTask(title, task.assigneeId ?? "", { parentId: task.id });
+    addStandaloneTask(title, task.assigneeId ?? "", {
+      parentId: task.id,
+      createdBy: currentUserId,
+    });
     setNewSubtask("");
   }
 
@@ -2019,13 +2032,15 @@ function PersonalTaskDetailDialog({
                     >
                       {sub.title}
                     </span>
-                    <button
-                      onClick={() => removeStandaloneTask(sub.id)}
-                      className="shrink-0 text-muted-foreground hover:text-red-500"
-                      aria-label="Remover subtarefa"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {canManage(sub.createdBy) && (
+                      <button
+                        onClick={() => removeStandaloneTask(sub.id)}
+                        className="shrink-0 text-muted-foreground hover:text-red-500"
+                        aria-label="Remover subtarefa"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

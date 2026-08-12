@@ -405,7 +405,7 @@ interface State {
   addStandaloneTask: (
     title: string,
     assigneeId: string,
-    options?: { dueDate?: string; tagId?: string; parentId?: string },
+    options?: { dueDate?: string; tagId?: string; parentId?: string; createdBy?: string },
   ) => void;
   setStandaloneTaskStatus: (id: string, status: TaskStatus) => void;
   setStandaloneTaskPaused: (id: string, paused: boolean) => void;
@@ -1184,6 +1184,7 @@ export const useStore = create<State>()((set, get) => ({
       dueDate: options?.dueDate,
       tagId: options?.tagId,
       parentId: options?.parentId,
+      createdBy: options?.createdBy,
     };
     set((s) => ({ personalTasks: [...s.personalTasks, task] }));
     supabase
@@ -1199,6 +1200,7 @@ export const useStore = create<State>()((set, get) => ({
         due_date: task.dueDate ?? null,
         tag_id: task.tagId ?? null,
         parent_id: task.parentId ?? null,
+        created_by: task.createdBy ?? null,
       })
       .then(({ error }) => dbError(error));
   },
