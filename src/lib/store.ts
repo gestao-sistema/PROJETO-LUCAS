@@ -1363,10 +1363,10 @@ export const useStore = create<State>()((set, get) => ({
     const trimmed = label.trim();
     if (!trimmed) return "";
     const id = `tag-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    set((s) => ({ taskTags: [...s.taskTags, { id, label: trimmed, color }] }));
+    set((s) => ({ taskTags: [...s.taskTags, { id, label: trimmed, color, isColumn: false }] }));
     supabase
       .from("task_tags")
-      .insert({ id, label: trimmed, color })
+      .insert({ id, label: trimmed, color, is_column: false })
       .then(({ error }) => dbError(error));
     return id;
   },
