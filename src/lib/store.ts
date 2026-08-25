@@ -80,6 +80,8 @@ export interface BatchTask {
   status?: TaskStatus;
   parentId?: string; // sub-tarefa aponta para tarefa mãe
   tagId?: string; // tag de origem (gerada pelo usuário)
+  notes?: string;
+  links?: TaskLink[];
 }
 
 export interface StageEvent {

@@ -1143,14 +1143,18 @@ function PersonalView({
   }
 
   function handleOpenDetail(task: EnrichedTask) {
-    // Só tarefas pessoais (standalone) têm modal de detalhamento
-    if ("_standalone" in task && task._standalone) {
-      setDetailTaskId(task.id);
-    }
+    // Both personal (standalone) and Kanban (order) tasks can be opened
+    setDetailTaskId(task.id);
   }
 
+  // Find the task from either storePersonalTasks or orders
   const detailTask = detailTaskId
-    ? (storePersonalTasks.find((t) => t.id === detailTaskId) ?? null)
+    ? (() => {
+        const personal = storePersonalTasks.find((t) => t.id === detailTaskId);
+        if (personal) return personal;
+        const orderTask = orders.flatMap((o) => o.tasks).find((t) => t.id === detailTaskId);
+        return orderTask ?? null;
+      })()
     : null;
 
   function formatTime(startedAt?: string, completedAt?: string, paused?: boolean): string {
@@ -1511,7 +1515,19 @@ function PersonalView({
         onOpenChange={(o) => {
           if (!o) setDetailTaskId(null);
         }}
-        subtasks={storePersonalTasks.filter((t) => t.parentId === detailTaskId)}
+        subtasks={
+          detailTask && "isPersonal" in detailTask // It's an order/batch task
+            ? orders.flatMap((o) => o.tasks).filter((t) => t.parentId === detailTaskId)
+            : storePersonalTasks.filter((t) => t.parentId === detailTaskId)
+        }
+        onToggleSubtask={(subId) => {
+          const isBatch = detailTask && "stage" in detailTask && !("isPersonal" in detailTask && detailTask.isPersonal);
+          if (isBatch && batchOrderId) {
+            toggleTask(batchOrderId, subId);
+          } else {
+            setStandaloneTaskStatus(subId, "nao_iniciada"); // fallback
+          }
+        }}
       />
     </section>
   );
@@ -1769,17 +1785,20 @@ function PersonalTaskDetailDialog({
   open,
   onOpenChange,
   subtasks,
+  onToggleSubtask,
 }: {
-  task: PersonalTask | null;
+  task: PersonalTask | BatchTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  subtasks: PersonalTask[];
+  subtasks: (PersonalTask | BatchTask)[];
+  onToggleSubtask: (taskId: string) => void;
 }) {
   const setStandaloneTaskNotes = useStore((s) => s.setStandaloneTaskNotes);
   const setStandaloneTaskLinks = useStore((s) => s.setStandaloneTaskLinks);
   const setStandaloneTaskTitle = useStore((s) => s.setStandaloneTaskTitle);
-  const removeStandaloneTask = useStore((s) => s.removeStandaloneTask);
   const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
+  const toggleTask = useStore((s) => s.toggleTask);
+  const orders = useStore((s) => s.orders);
 
   const profile = useProfile((s) => s.profile);
   const team = useStore((s) => s.team);
@@ -1793,17 +1812,22 @@ function PersonalTaskDetailDialog({
     role === "Gerente" ||
     role === "Coordenador";
 
+  // Detect if this is a batch task (from kanban) vs personal task
+  const isBatch = task != null && "stage" in task && !("isPersonal" in task && task.isPersonal);
+  // Find orderId for batch tasks
+  const batchOrderId = isBatch && task
+    ? orders.find((o) => o.tasks.some((t) => t.id === task.id))?.id
+    : undefined;
+
   const [notesDraft, setNotesDraft] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [titleDraft, setTitleDraft] = useState("");
 
-  // Sincroniza rascunho de anotações quando a tarefa muda/abre
   useEffect(() => {
     setNotesDraft(task?.notes ?? "");
   }, [task?.id, task?.notes]);
 
-  // Sincroniza rascunho do título quando a tarefa muda/abre
   useEffect(() => {
     setTitleDraft(task?.title ?? "");
   }, [task?.id, task?.title]);
@@ -1976,12 +2000,16 @@ function PersonalTaskDetailDialog({
                   >
                     <Checkbox
                       checked={sub.status === "concluida"}
-                      onCheckedChange={() =>
-                        setStandaloneTaskStatus(
-                          sub.id,
-                          sub.status === "concluida" ? "nao_iniciada" : "concluida",
-                        )
-                      }
+                      onCheckedChange={() => {
+                        if (isBatch && batchOrderId) {
+                          toggleTask(batchOrderId, sub.id);
+                        } else {
+                          setStandaloneTaskStatus(
+                            sub.id,
+                            sub.status === "concluida" ? "nao_iniciada" : "concluida",
+                          );
+                        }
+                      }}
                     />
                     <span
                       className={`min-w-0 flex-1 truncate text-sm ${
