@@ -1078,27 +1078,46 @@ export const useStore = create<State>()((set, get) => ({
   },
 
   toggleTask: (orderId, taskId) => {
-    set((s) => ({
-      orders: s.orders.map((o) =>
-        o.id !== orderId
-          ? o
-          : {
-              ...o,
-              tasks: o.tasks.map((t) =>
-                t.id === taskId
-                  ? {
+    set((s) => {
+      const order = s.orders.find((o) => o.id === orderId);
+      if (!order) return s;
+      const targetTask = order.tasks.find((t) => t.id === taskId);
+      if (!targetTask) return s;
+      const isParent = !targetTask.parentId;
+      const newDone = !targetTask.done;
+      const newStatus = newDone ? ("concluida" as TaskStatus) : ("nao_iniciada" as TaskStatus);
+      const now = newDone ? new Date().toISOString() : undefined;
+
+      return {
+        orders: s.orders.map((o) =>
+          o.id !== orderId
+            ? o
+            : {
+                ...o,
+                tasks: o.tasks.map((t) => {
+                  if (t.id === taskId) {
+                    return {
                       ...t,
-                      done: !t.done,
-                      completedAt: !t.done ? new Date().toISOString() : undefined,
-                      status: !t.done
-                        ? ("concluida" as TaskStatus)
-                        : ("nao_iniciada" as TaskStatus),
-                    }
-                  : t,
-              ),
-            },
-      ),
-    }));
+                      done: newDone,
+                      completedAt: now,
+                      status: newStatus,
+                    };
+                  }
+                  // Propagate to children if parent toggled
+                  if (isParent && t.parentId === taskId) {
+                    return {
+                      ...t,
+                      done: newDone,
+                      completedAt: now,
+                      status: newStatus,
+                    };
+                  }
+                  return t;
+                }),
+              },
+        ),
+      };
+    });
     pushTasks(get(), orderId);
   },
 
@@ -1133,31 +1152,51 @@ export const useStore = create<State>()((set, get) => ({
   setTaskStatus: (orderId, taskId, status) => {
     const now = new Date().toISOString();
     set((s) => ({
-      orders: s.orders.map((o) =>
-        o.id !== orderId
-          ? o
-          : {
-              ...o,
-              tasks: o.tasks.map((t) => {
-                if (t.id !== taskId) return t;
-                const patch: Partial<BatchTask> = { status };
-                if (status === "em_processo") {
-                  patch.startedAt = now;
-                  patch.done = false;
-                  patch.completedAt = undefined;
-                  patch.paused = false;
-                } else if (status === "concluida") {
-                  patch.completedAt = now;
-                  patch.done = true;
-                  patch.paused = false;
-                } else {
-                  patch.paused = false;
-                  if (t.status === "concluida") patch.done = false;
-                }
-                return { ...t, ...patch };
-              }),
-            },
-      ),
+      orders: s.orders.map((o) => {
+        if (o.id !== orderId) return o;
+        const isParent = !o.tasks.find((t) => t.id === taskId)?.parentId;
+        return {
+          ...o,
+          tasks: o.tasks.map((t) => {
+            // Cascade to children when parent is toggled
+            if (isParent && t.parentId === taskId) {
+              const childPatch: Partial<BatchTask> = { status };
+              if (status === "concluida") {
+                childPatch.completedAt = now;
+                childPatch.done = true;
+                childPatch.paused = false;
+              } else if (status === "em_processo") {
+                childPatch.startedAt = now;
+                childPatch.done = false;
+                childPatch.completedAt = undefined;
+                childPatch.paused = false;
+              } else {
+                childPatch.paused = false;
+                if (t.status === "concluida") childPatch.done = false;
+                childPatch.completedAt = undefined;
+              }
+              return { ...t, ...childPatch };
+            }
+            if (t.id !== taskId) return t;
+            const patch: Partial<BatchTask> = { status };
+            if (status === "em_processo") {
+              patch.startedAt = now;
+              patch.done = false;
+              patch.completedAt = undefined;
+              patch.paused = false;
+            } else if (status === "concluida") {
+              patch.completedAt = now;
+              patch.done = true;
+              patch.paused = false;
+            } else {
+              patch.paused = false;
+              if (t.status === "concluida") patch.done = false;
+              patch.completedAt = undefined;
+            }
+            return { ...t, ...patch };
+          }),
+        };
+      }),
     }));
     pushTasks(get(), orderId);
   },
@@ -1282,28 +1321,64 @@ export const useStore = create<State>()((set, get) => ({
   },
 
   setStandaloneTaskStatus: (id, status) => {
-    set((s) => ({
-      personalTasks: s.personalTasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status,
-              startedAt:
-                status === "em_processo" ? (t.startedAt ?? new Date().toISOString()) : t.startedAt,
-              completedAt: status === "concluida" ? new Date().toISOString() : undefined,
-            }
-          : t,
-      ),
-    }));
     const now = new Date().toISOString();
+    set((s) => ({
+      personalTasks: s.personalTasks.map((t) => {
+        if (t.id === id) {
+          return {
+            ...t,
+            status,
+            startedAt:
+              status === "em_processo" ? (t.startedAt ?? now) : t.startedAt,
+            completedAt: status === "concluida" ? now : undefined,
+          };
+        }
+        // Cascade 'concluida' to children
+        if (t.parentId === id && status === "concluida") {
+          return {
+            ...t,
+            status: "concluida",
+            completedAt: now,
+          };
+        }
+        // If un-concluida parent, un-concluida children too
+        if (t.parentId === id && t.status === "concluida" && status !== "concluida") {
+          return {
+            ...t,
+            status: "nao_iniciada",
+            completedAt: undefined,
+          };
+        }
+        return t;
+      }),
+    }));
+
+    // API updates
     const update: Record<string, unknown> = { status };
     if (status === "em_processo") update["started_at"] = now;
     if (status === "concluida") update["completed_at"] = now;
+
     supabase
       .from("personal_tasks")
       .update(update)
       .eq("id", id)
       .then(({ error }) => dbError(error));
+
+    // Update children in DB if propagating
+    if (status === "concluida") {
+      supabase
+        .from("personal_tasks")
+        .update({ status: "concluida", completed_at: now })
+        .eq("parent_id", id)
+        .then(({ error }) => dbError(error));
+    } else {
+      supabase
+        .from("personal_tasks")
+        .update({ status: "nao_iniciada", completed_at: null })
+        .eq("parent_id", id)
+        .eq("status", "concluida")
+        .then(({ error }) => dbError(error));
+    }
   },
 
   setStandaloneTaskPaused: (id, paused) => {

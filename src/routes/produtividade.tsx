@@ -371,7 +371,8 @@ function SectorView({
     workloadByMember.length > 1 ? workloadByMember[workloadByMember.length - 1] : null;
 
   const listaTasks = useMemo(() => {
-    let result = filteredTasks;
+    // Only parent tasks (no parentId) appear in the list view
+    let result = filteredTasks.filter((t) => !t.parentId);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       result = result.filter(
@@ -982,7 +983,8 @@ function PersonalView({
   }, [allPersonalTasks, startDate, endDate]);
 
   const listaTasks = useMemo(() => {
-    let result = filteredTasks;
+    // Only parent tasks (no parentId) appear in the list view
+    let result = filteredTasks.filter((t) => !t.parentId);
     if (listaSearch.trim()) {
       const q = listaSearch.trim().toLowerCase();
       result = result.filter(
