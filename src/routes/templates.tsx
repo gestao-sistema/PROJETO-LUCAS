@@ -536,14 +536,14 @@ function SortableTemplateItem({
       {open && (
         <div className="ml-10 mb-2 mr-4 flex flex-col gap-1.5 border-l-2 border-muted pl-4">
           {subtasks?.map((child, i) => (
-            <div key={`${i}-${child}`} className="group flex items-center gap-2">
+            <div key={`${i}-${child}`} className="flex items-center gap-2">
               <span className="flex-1 text-xs text-foreground/80">{child}</span>
               <button
                 onClick={() => onRemoveChild(i)}
-                className="text-muted-foreground opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                className="text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-full p-1 transition-colors"
                 aria-label="Remover subtarefa"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           ))}

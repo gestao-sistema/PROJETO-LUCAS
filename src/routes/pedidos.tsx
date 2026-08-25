@@ -32,6 +32,7 @@ import {
   Link as LinkIcon,
   Flag,
   Calendar,
+  Columns3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -1278,8 +1279,6 @@ function TaskItem({
   toggleTask,
   assignTask,
   setTaskDueDate,
-  removeTask,
-  addSubtask,
 }: any) {
   const [open, setOpen] = useState(false);
 
@@ -1346,14 +1345,6 @@ function TaskItem({
               className="h-8 w-[8.5rem] rounded-full border-border bg-muted/40 px-2 text-xs disabled:opacity-60"
             />
           </div>
-          <button
-            onClick={() => removeTask(orderId, t.id)}
-            className="text-muted-foreground hover:text-red-600 disabled:text-muted/30 disabled:hover:text-muted/30"
-            aria-label="Remover tarefa"
-            disabled={isRestricted}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0">
               <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
@@ -1361,7 +1352,7 @@ function TaskItem({
           </CollapsibleTrigger>
         </div>
         <CollapsibleContent className="CollapsibleContent">
-          {(subtasks.length > 0 || !isRestricted) && (
+          {(subtasks.length > 0) && (
             <div className="ml-11 mb-3 mr-14 flex flex-col gap-1.5 border-l-2 border-muted pl-4">
               {subtasks.map((sub: any) => (
                 <div key={sub.id} className="group flex items-center gap-2">
@@ -1386,28 +1377,8 @@ function TaskItem({
                   >
                     {sub.title}
                   </span>
-                  <button
-                    onClick={() => removeTask(orderId, sub.id)}
-                    className="text-muted-foreground opacity-0 transition-opacity hover:text-red-600 disabled:text-muted/30 disabled:hover:text-muted/30 group-hover:opacity-100"
-                    aria-label="Remover subtarefa"
-                    disabled={isRestricted}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
                 </div>
               ))}
-              {!isRestricted && (
-                <Input
-                  placeholder="Nova subtarefa (Enter)"
-                  className="h-7 max-w-sm rounded-full border-dashed bg-muted/20 text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                      addSubtask(orderId, t.id, e.currentTarget.value.trim());
-                      e.currentTarget.value = "";
-                    }
-                  }}
-                />
-              )}
             </div>
           )}
         </CollapsibleContent>
@@ -1424,21 +1395,8 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
   const toggleTask = useStore((s) => s.toggleTask);
   const assignTask = useStore((s) => s.assignTask);
   const setTaskDueDate = useStore((s) => s.setTaskDueDate);
-  const addTask = useStore((s) => s.addTask);
-  const addSubtask = useStore((s) => s.addSubtask);
-  const removeTask = useStore((s) => s.removeTask);
   const profile = useProfile((s) => s.profile);
   const isRestricted = profile?.role === "Analista" || profile?.role === "Auxiliar";
-
-  const [newTitle, setNewTitle] = useState("");
-  const [newStage, setNewStage] = useState<string>(order.currentStage);
-  const [newAssignee, setNewAssignee] = useState<string>("");
-  const [newWeight, setNewWeight] = useState<TaskWeight>(1);
-
-  const selfMemberId = useMemo(() => {
-    if (!isRestricted || !profile?.email) return "";
-    return team.find((m) => m.email === profile.email)?.id ?? "";
-  }, [isRestricted, profile, team]);
 
   const dedupedTasks = useMemo(() => {
     const byStage = new Map<string, typeof order.tasks>();
@@ -1508,8 +1466,6 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
                     toggleTask={toggleTask}
                     assignTask={assignTask}
                     setTaskDueDate={setTaskDueDate}
-                    removeTask={removeTask}
-                    addSubtask={addSubtask}
                   />
                 );
               })}
@@ -1518,77 +1474,10 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
         ))}
       </div>
 
-      {!isRestricted && (
-        <div className="rounded-2xl border border-dashed border-border p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              placeholder="Nova tarefa..."
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="min-w-[12rem] flex-1 rounded-full"
-            />
-            <Select value={newStage} onValueChange={setNewStage}>
-              <SelectTrigger className="h-9 w-auto min-w-[10rem] rounded-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {columns.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={String(newWeight)}
-              onValueChange={(v) => setNewWeight(Number(v) as TaskWeight)}
-            >
-              <SelectTrigger className="h-9 w-auto min-w-[6rem] rounded-full">
-                <span className="text-xs">Peso {newWeight}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Peso 1</SelectItem>
-                <SelectItem value="2">Peso 2</SelectItem>
-                <SelectItem value="3">Peso 3</SelectItem>
-              </SelectContent>
-            </Select>
-            {!isRestricted && (
-              <Select
-                value={newAssignee || "none"}
-                onValueChange={(v) => setNewAssignee(v === "none" ? "" : v)}
-              >
-                <SelectTrigger className="h-9 w-auto min-w-[9rem] rounded-full">
-                  <SelectValue placeholder="Responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem responsável</SelectItem>
-                  {team.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Button
-              disabled={!newTitle.trim()}
-              onClick={() => {
-                addTask(
-                  order.id,
-                  newTitle.trim(),
-                  newStage,
-                  isRestricted ? selfMemberId || undefined : newAssignee || undefined,
-                  newWeight,
-                );
-                setNewTitle("");
-              }}
-              className="rounded-full"
-            >
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-[11px] text-muted-foreground">
+        <Columns3 className="h-3.5 w-3.5" />
+        Tarefas espelham os modelos definidos em Customização. Edite-as lá.
+      </div>
     </div>
   );
 }

@@ -806,51 +806,74 @@ export const useStore = create<State>()((set, get) => ({
     set((s) => ({
       orders: s.orders.map((o) => {
         if (o.currentStage === DONE_STAGE_ID) return o;
-        let nextTasks = dedupTasks(o.tasks);
-        for (const col of cols) {
-          if (col.isFinalizado) continue;
+        // Sync colunas gerenciadas: adicionar, remover, atualizar peso
+        const syncedCols = cols.filter((c) => !c.isFinalizado);
+        const syncedColIds = new Set(syncedCols.map((c) => c.id));
+
+        // 1) Preservar tarefas de colunas NÃO sincronizadas (ex: finalizado)
+        const preserved = o.tasks.filter((t) => !syncedColIds.has(t.stage));
+
+        // 2) Para cada coluna sincronizada, reconstruir lista exata a partir do template
+        const rebuilt: BatchTask[] = [];
+        for (const col of syncedCols) {
           const tpls = templates[col.id] ?? [];
-          const existingTitles = new Set(
-            nextTasks
-              .filter((t) => t.stage === col.id && !t.parentId)
-              .map((t) => t.title.trim().toLowerCase()),
-          );
-          const additions: BatchTask[] = [];
+          const oldColTasks = dedupTasks(o.tasks.filter((t) => t.stage === col.id));
+
           for (let i = 0; i < tpls.length; i++) {
             const tpl = tpls[i];
-            if (existingTitles.has(tpl.title.trim().toLowerCase())) continue;
-            const parentId = `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
-            additions.push({
+            // Match pai existente por título
+            const existingParent = oldColTasks.find(
+              (t) => !t.parentId && t.title.trim().toLowerCase() === tpl.title.trim().toLowerCase(),
+            );
+            const parentId =
+              existingParent?.id ??
+              `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+
+            // Adicionar/preservar pai (atualiza peso se mudou)
+            rebuilt.push({
+              ...(existingParent ?? {
+                createdAt: today,
+                status: "nao_iniciada" as TaskStatus,
+                done: false,
+              }),
               id: parentId,
               title: tpl.title,
               stage: col.id,
-              done: false,
               weight: tpl.weight,
-              createdAt: today,
-              status: "nao_iniciada",
               tagId: `tag-col-${col.id}`,
             });
-            if (tpl.children?.length) {
-              for (let j = 0; j < tpl.children.length; j++) {
-                additions.push({
-                  id: `t-sub-${col.id}-${Date.now()}-${i}-${j}-${Math.random().toString(36).slice(2, 6)}`,
-                  title: tpl.children[j],
-                  stage: col.id,
+
+            // Sincronizar filhos (preservar done/assignee do existente)
+            const expectedChildren = tpl.children ?? [];
+            const oldChildren = oldColTasks.filter(
+              (t) => t.parentId === existingParent?.id,
+            );
+
+            for (const [j, childTitle] of expectedChildren.entries()) {
+              const existingChild = oldChildren.find(
+                (c) => c.title.trim().toLowerCase() === childTitle.trim().toLowerCase(),
+              );
+              rebuilt.push({
+                ...(existingChild ?? {
+                  createdAt: today,
+                  status: "nao_iniciada" as TaskStatus,
                   done: false,
                   weight: 1 as TaskWeight,
-                  createdAt: today,
-                  status: "nao_iniciada",
-                  parentId,
-                  tagId: `tag-col-${col.id}`,
-                });
-              }
+                }),
+                id:
+                  existingChild?.id ??
+                  `t-sub-${col.id}-${Date.now()}-${i}-${j}-${Math.random().toString(36).slice(2, 6)}`,
+                title: childTitle,
+                stage: col.id,
+                parentId,
+                tagId: `tag-col-${col.id}`,
+              });
             }
           }
-          if (additions.length > 0) {
-            nextTasks = [...nextTasks, ...additions];
-          }
         }
-        if (nextTasks === o.tasks) return o;
+
+        const nextTasks = [...preserved, ...rebuilt];
+        if (nextTasks.length === o.tasks.length && nextTasks.every((t, i) => t.id === o.tasks[i]?.id && t.weight === o.tasks[i]?.weight && t.done === o.tasks[i]?.done)) return o;
         touched.push({ ...o, tasks: nextTasks });
         return { ...o, tasks: nextTasks };
       }),
