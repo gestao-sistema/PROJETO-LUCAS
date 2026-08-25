@@ -372,6 +372,7 @@ function ColumnCard({ column }: { column: KanbanColumn }) {
                   id={`tpl-${i}`}
                   title={it.title}
                   weight={it.weight}
+                  children={it.children}
                   onTitleChange={(title) => {
                     const next = [...templates];
                     next[i] = { ...next[i], title };
@@ -384,6 +385,21 @@ function ColumnCard({ column }: { column: KanbanColumn }) {
                     setTemplate(column.id, next);
                   }}
                   onWeightCommit={() => commitTemplate(column.id)}
+                  onAddChild={(childTitle) => {
+                    const next = [...templates];
+                    next[i] = { ...next[i], children: [...(next[i].children ?? []), childTitle] };
+                    setTemplate(column.id, next);
+                    commitTemplate(column.id);
+                  }}
+                  onRemoveChild={(childIdx) => {
+                    const next = [...templates];
+                    next[i] = {
+                      ...next[i],
+                      children: (next[i].children ?? []).filter((_, idx) => idx !== childIdx),
+                    };
+                    setTemplate(column.id, next);
+                    commitTemplate(column.id);
+                  }}
                   onRemove={() => {
                     setTemplate(
                       column.id,
@@ -436,24 +452,32 @@ function SortableTemplateItem({
   id,
   title,
   weight,
+  children: subtasks,
   onTitleChange,
   onTitleCommit,
   onWeightChange,
   onWeightCommit,
   onRemove,
+  onAddChild,
+  onRemoveChild,
 }: {
   id: string;
   title: string;
   weight: TaskWeight;
+  children?: string[];
   onTitleChange: (title: string) => void;
   onTitleCommit: () => void;
   onWeightChange: (w: TaskWeight) => void;
   onWeightCommit: () => void;
   onRemove: () => void;
+  onAddChild: (title: string) => void;
+  onRemoveChild: (idx: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
+  const [open, setOpen] = useState(false);
+  const [newChild, setNewChild] = useState("");
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -462,44 +486,81 @@ function SortableTemplateItem({
   };
 
   return (
-    <li ref={setNodeRef} style={style} className="flex items-center gap-2 px-4 py-2.5">
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
-        aria-label="Arrastar"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <Input
-        value={title}
-        onChange={(e) => onTitleChange(e.target.value)}
-        onBlur={onTitleCommit}
-        className="border-transparent bg-transparent px-0 shadow-none focus-visible:border-input focus-visible:bg-card"
-      />
-      <Select
-        value={String(weight)}
-        onValueChange={(v) => {
-          onWeightChange(Number(v) as TaskWeight);
-          onWeightCommit();
-        }}
-      >
-        <SelectTrigger className="h-8 w-auto min-w-[7rem] rounded-full bg-muted/40">
-          <span className="text-xs">Peso {weight}</span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="1">Peso 1 (leve)</SelectItem>
-          <SelectItem value="2">Peso 2 (médio)</SelectItem>
-          <SelectItem value="3">Peso 3 (pesado)</SelectItem>
-        </SelectContent>
-      </Select>
-      <button
-        onClick={onRemove}
-        className="text-muted-foreground hover:text-red-600"
-        aria-label="Remover tarefa"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+    <li ref={setNodeRef} style={style} className="flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-2.5">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          aria-label="Arrastar"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <Input
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          onBlur={onTitleCommit}
+          className="border-transparent bg-transparent px-0 shadow-none focus-visible:border-input focus-visible:bg-card"
+        />
+        <Select
+          value={String(weight)}
+          onValueChange={(v) => {
+            onWeightChange(Number(v) as TaskWeight);
+            onWeightCommit();
+          }}
+        >
+          <SelectTrigger className="h-8 w-auto min-w-[7rem] rounded-full bg-muted/40">
+            <span className="text-xs">Peso {weight}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">Peso 1 (leve)</SelectItem>
+            <SelectItem value="2">Peso 2 (médio)</SelectItem>
+            <SelectItem value="3">Peso 3 (pesado)</SelectItem>
+          </SelectContent>
+        </Select>
+        <button
+          onClick={onRemove}
+          className="text-muted-foreground hover:text-red-600"
+          aria-label="Remover tarefa"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setOpen(!open)}
+          className="text-muted-foreground hover:text-foreground"
+          aria-label="Subtarefas"
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+      {open && (
+        <div className="ml-10 mb-2 mr-4 flex flex-col gap-1.5 border-l-2 border-muted pl-4">
+          {subtasks?.map((child, i) => (
+            <div key={`${i}-${child}`} className="group flex items-center gap-2">
+              <span className="flex-1 text-xs text-foreground/80">{child}</span>
+              <button
+                onClick={() => onRemoveChild(i)}
+                className="text-muted-foreground opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                aria-label="Remover subtarefa"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+          <Input
+            placeholder="Nova subtarefa (Enter)"
+            className="h-7 max-w-sm rounded-full border-dashed bg-muted/20 text-xs"
+            value={newChild}
+            onChange={(e) => setNewChild(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newChild.trim()) {
+                onAddChild(newChild.trim());
+                setNewChild("");
+              }
+            }}
+          />
+        </div>
+      )}
     </li>
   );
 }
@@ -523,7 +584,7 @@ function TasksSection() {
   const [newTaskTagId, setNewTaskTagId] = useState("");
 
   const customTags = taskTags.filter((t) => !t.isColumn);
-  const tarefas = personalTasks.filter((t) => !t.parentId);
+  const tarefas = personalTasks.filter((t) => !t.parentId && t.status !== "concluida");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const groupedByTag = useMemo(() => {
@@ -825,7 +886,7 @@ function TarefaCard({
   ) => void;
 }) {
   const [subTitle, setSubTitle] = useState("");
-  const subs = allTasks.filter((t) => t.parentId === tarefa.id);
+  const subs = allTasks.filter((t) => t.parentId === tarefa.id && t.status !== "concluida");
   const tag = taskTags.find((t) => t.id === tarefa.tagId);
 
   function handleAddSub() {

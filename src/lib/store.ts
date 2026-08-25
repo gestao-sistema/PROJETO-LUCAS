@@ -137,6 +137,7 @@ export type Lote = PurchaseOrder;
 export interface TaskTemplateItem {
   title: string;
   weight: TaskWeight;
+  children?: string[]; // sub-tarefas do template (só título, sem peso próprio)
 }
 export type TaskTemplates = Record<string, TaskTemplateItem[]>;
 
@@ -291,16 +292,36 @@ function mapTaskTag(row: Record<string, unknown>): TaskTag {
 // === Tasks helper ===
 function tasksFromTemplate(templates: TaskTemplates, stage: string, baseDate: string): BatchTask[] {
   const tagId = stage ? `tag-col-${stage}` : undefined;
-  return (templates[stage] ?? []).map((it, i) => ({
-    id: `t-${stage}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
-    title: it.title,
-    stage,
-    done: false,
-    weight: it.weight,
-    createdAt: baseDate,
-    status: "nao_iniciada" as TaskStatus,
-    tagId,
-  }));
+  const results: BatchTask[] = [];
+  for (const [i, it] of (templates[stage] ?? []).entries()) {
+    const parentId = `t-${stage}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+    results.push({
+      id: parentId,
+      title: it.title,
+      stage,
+      done: false,
+      weight: it.weight,
+      createdAt: baseDate,
+      status: "nao_iniciada" as TaskStatus,
+      tagId,
+    });
+    if (it.children?.length) {
+      for (const [j, childTitle] of it.children.entries()) {
+        results.push({
+          id: `t-sub-${stage}-${Date.now()}-${i}-${j}-${Math.random().toString(36).slice(2, 6)}`,
+          title: childTitle,
+          stage,
+          done: false,
+          weight: 1 as TaskWeight,
+          createdAt: baseDate,
+          status: "nao_iniciada" as TaskStatus,
+          parentId,
+          tagId,
+        });
+      }
+    }
+  }
+  return results;
 }
 
 // === Silent error handler ===
@@ -798,8 +819,9 @@ export const useStore = create<State>()((set, get) => ({
           for (let i = 0; i < tpls.length; i++) {
             const tpl = tpls[i];
             if (existingTitles.has(tpl.title.trim().toLowerCase())) continue;
+            const parentId = `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
             additions.push({
-              id: `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+              id: parentId,
               title: tpl.title,
               stage: col.id,
               done: false,
@@ -808,6 +830,21 @@ export const useStore = create<State>()((set, get) => ({
               status: "nao_iniciada",
               tagId: `tag-col-${col.id}`,
             });
+            if (tpl.children?.length) {
+              for (let j = 0; j < tpl.children.length; j++) {
+                additions.push({
+                  id: `t-sub-${col.id}-${Date.now()}-${i}-${j}-${Math.random().toString(36).slice(2, 6)}`,
+                  title: tpl.children[j],
+                  stage: col.id,
+                  done: false,
+                  weight: 1 as TaskWeight,
+                  createdAt: today,
+                  status: "nao_iniciada",
+                  parentId,
+                  tagId: `tag-col-${col.id}`,
+                });
+              }
+            }
           }
           if (additions.length > 0) {
             nextTasks = [...nextTasks, ...additions];
@@ -944,8 +981,9 @@ export const useStore = create<State>()((set, get) => ({
       if (col.isFinalizado) continue;
       const tpls = get().templates[col.id] ?? [];
       for (let i = 0; i < tpls.length; i++) {
+        const parentId = `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
         allTasks.push({
-          id: `t-${col.id}-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+          id: parentId,
           title: tpls[i].title,
           stage: col.id,
           done: false,
@@ -953,6 +991,20 @@ export const useStore = create<State>()((set, get) => ({
           createdAt: date,
           status: "nao_iniciada",
         });
+        if (tpls[i].children?.length) {
+          for (let j = 0; j < tpls[i].children.length; j++) {
+            allTasks.push({
+              id: `t-sub-${col.id}-${Date.now()}-${i}-${j}-${Math.random().toString(36).slice(2, 6)}`,
+              title: tpls[i].children![j],
+              stage: col.id,
+              done: false,
+              weight: 1 as TaskWeight,
+              createdAt: date,
+              status: "nao_iniciada",
+              parentId,
+            });
+          }
+        }
       }
     }
     const newLote: PurchaseOrder = {
