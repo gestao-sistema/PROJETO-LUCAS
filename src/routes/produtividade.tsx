@@ -1021,34 +1021,6 @@ function PersonalView({
     return map;
   }, [filteredTasks]);
 
-  const groupedByMother: Record<
-    PersonalBoxKey,
-    Map<string, { mother: EnrichedTask; subs: EnrichedTask[] }>
-  > = useMemo(() => {
-    const result: Record<
-      PersonalBoxKey,
-      Map<string, { mother: EnrichedTask; subs: EnrichedTask[] }>
-    > = {
-      nao_feitas: new Map(),
-      em_processo: new Map(),
-      concluida: new Map(),
-    };
-    const mothers = filteredTasks.filter((t) => !t.parentId);
-
-    for (const boxKey of ["nao_feitas", "em_processo", "concluida"] as PersonalBoxKey[]) {
-      const map = result[boxKey];
-      for (const mother of mothers) {
-        const subsInBox = filteredTasks.filter(
-          (t) => t.parentId === mother.id && grouped[boxKey].includes(t),
-        );
-        if (subsInBox.length > 0) {
-          map.set(mother.id, { mother, subs: subsInBox });
-        }
-      }
-    }
-    return result;
-  }, [filteredTasks, grouped]);
-
   const kpis = useMemo(() => {
     const total = filteredTasks.length;
     const naoFeitas = grouped.nao_feitas.length;
@@ -1389,7 +1361,6 @@ function PersonalView({
                   accent={box.accent}
                   labelColor={box.labelColor}
                   tasks={grouped[box.key]}
-                  groupedByMother={groupedByMother[box.key]}
                   taskTags={taskTags}
                   onStatusChange={handleStatusChange}
                   onPause={handlePause}
@@ -1566,7 +1537,6 @@ function StatusBox({
   accent: string;
   labelColor: string;
   tasks: EnrichedTask[];
-  groupedByMother: Map<string, { mother: EnrichedTask; subs: EnrichedTask[] }>;
   taskTags: ReturnType<typeof useStore.getState>["taskTags"];
   onStatusChange: (orderId: string, taskId: string, status: TaskStatus) => void;
   onPause: (orderId: string, taskId: string, paused: boolean) => void;
@@ -1590,10 +1560,10 @@ function StatusBox({
       <div className="mb-3 flex items-center justify-between">
         <h3 className={`text-sm font-semibold tracking-tight ${labelColor}`}>{label}</h3>
         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums">
-          {tasks.length}
+          {nonSubtasks.length}
         </span>
       </div>
-      {tasks.length === 0 ? (
+      {nonSubtasks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
           Nenhuma tarefa
         </div>
@@ -1603,7 +1573,6 @@ function StatusBox({
           strategy={verticalListSortingStrategy}
         >
           <ul className="space-y-1.5">
-            {/* Tarefas sem sub-tarefas */}
             {nonSubtasks.map((t) => (
               <SortablePersonalTask
                 key={`${t.orderId}-${t.id}`}
@@ -1619,57 +1588,6 @@ function StatusBox({
                 userRole={userRole}
                 formatTime={formatTime}
               />
-            ))}
-
-            {/* Grupos por tarefa (com sub-tarefas) */}
-            {Array.from(groupedByMother.values()).map(({ mother, subs }) => (
-              <li
-                key={`mother-${mother.id}`}
-                className="rounded-xl border border-border bg-background px-3 py-2 space-y-1"
-              >
-                {/* Header da tarefa */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{mother.title}</span>
-                      {mother.tagLabel && mother.tagColor && (
-                        <span
-                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${mother.tagColor}`}
-                        >
-                          {mother.tagLabel}
-                        </span>
-                      )}
-                    </div>
-                    {mother.dueDate && (
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        Prazo: {mother.dueDate}
-                      </div>
-                    )}
-                  </div>
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
-                    {subs.length}
-                  </span>
-                </div>
-
-                {/* Sub-Tarefas */}
-                {subs.map((sub) => (
-                  <SortablePersonalTask
-                    key={`${sub.orderId}-${sub.id}`}
-                    task={sub}
-                    status={status}
-                    taskTags={taskTags}
-                    onStatusChange={onStatusChange}
-                    onPause={onPause}
-                    onToggle={onToggle}
-                    onDelete={onDelete}
-                    onOpenDetail={onOpenDetail}
-                    currentUserId={currentUserId}
-                    userRole={userRole}
-                    formatTime={formatTime}
-                    isSubtask
-                  />
-                ))}
-              </li>
             ))}
           </ul>
         </SortableContext>
@@ -1690,7 +1608,6 @@ function SortablePersonalTask({
   currentUserId,
   userRole,
   formatTime,
-  isSubtask,
 }: {
   task: EnrichedTask;
   status: PersonalBoxKey;
@@ -1703,7 +1620,6 @@ function SortablePersonalTask({
   currentUserId?: string;
   userRole?: string;
   formatTime: (startedAt?: string, completedAt?: string, paused?: boolean) => string;
-  isSubtask?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.orderId ? `${task.orderId}-${task.id}` : `st-${task.id}`,
@@ -1723,12 +1639,10 @@ function SortablePersonalTask({
       ref={setNodeRef}
       style={style}
       className={`flex flex-col gap-1 rounded-xl px-3 py-2 ${
-        isSubtask
-          ? ""
-          : isOverdue
+        isOverdue
+          ? "border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20"
+          : isPriority
             ? "border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20"
-            : isPriority
-              ? "border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20"
               : "border border-border bg-background"
       }`}
     >
@@ -1862,7 +1776,6 @@ function PersonalTaskDetailDialog({
   const setStandaloneTaskNotes = useStore((s) => s.setStandaloneTaskNotes);
   const setStandaloneTaskLinks = useStore((s) => s.setStandaloneTaskLinks);
   const setStandaloneTaskTitle = useStore((s) => s.setStandaloneTaskTitle);
-  const addStandaloneTask = useStore((s) => s.addStandaloneTask);
   const removeStandaloneTask = useStore((s) => s.removeStandaloneTask);
   const setStandaloneTaskStatus = useStore((s) => s.setStandaloneTaskStatus);
 
@@ -1881,7 +1794,6 @@ function PersonalTaskDetailDialog({
   const [notesDraft, setNotesDraft] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
-  const [newSubtask, setNewSubtask] = useState("");
   const [titleDraft, setTitleDraft] = useState("");
 
   // Sincroniza rascunho de anotações quando a tarefa muda/abre
@@ -1930,17 +1842,6 @@ function PersonalTaskDetailDialog({
       task.id,
       links.filter((_, i) => i !== idx),
     );
-  }
-
-  function addSubtask() {
-    if (!task) return;
-    const title = newSubtask.trim();
-    if (!title) return;
-    addStandaloneTask(title, task.assigneeId ?? "", {
-      parentId: task.id,
-      createdBy: currentMemberId,
-    });
-    setNewSubtask("");
   }
 
   function normalizeUrl(url: string) {
@@ -2087,36 +1988,15 @@ function PersonalTaskDetailDialog({
                     >
                       {sub.title}
                     </span>
-                    {canManage(sub.createdBy, sub.assigneeId) && (
-                      <button
-                        onClick={() => removeStandaloneTask(sub.id)}
-                        className="shrink-0 text-muted-foreground hover:text-red-500"
-                        aria-label="Remover subtarefa"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
                   </li>
                 ))}
               </ul>
             )}
-            <div className="flex gap-2">
-              <Input
-                value={newSubtask}
-                onChange={(e) => setNewSubtask(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSubtask();
-                  }
-                }}
-                placeholder="Nova subtarefa..."
-                className="flex-1"
-              />
-              <Button variant="outline" disabled={!newSubtask.trim()} onClick={addSubtask}>
-                <Plus className="h-4 w-4" /> Adicionar
-              </Button>
-            </div>
+            {subtasks.length === 0 && (
+              <div className="text-xs text-muted-foreground italic">
+                Nenhuma subtarefa associada.
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
