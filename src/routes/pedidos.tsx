@@ -24,6 +24,7 @@ import {
   List as ListIcon,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   CheckCircle2,
   Plus,
   Trash2,
@@ -1262,6 +1263,159 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+/* ============== TASK ITEM (Extracting to add state) ============== */
+
+function TaskItem({
+  t,
+  orderId,
+  subtasks,
+  member,
+  team,
+  isRestricted,
+  profile,
+  toggleTask,
+  assignTask,
+  setTaskDueDate,
+  removeTask,
+  addSubtask,
+}: any) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} asChild>
+      <li className="flex flex-col">
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          <Checkbox
+            checked={t.done}
+            onCheckedChange={() => {
+              if (isRestricted && t.assigneeId) {
+                const member = team.find((m: any) => m.email === profile?.email);
+                if (t.assigneeId !== member?.id) {
+                  toast.error("Você só pode alternar suas próprias tarefas");
+                  return;
+                }
+              }
+              toggleTask(orderId, t.id);
+            }}
+          />
+          <span
+            className={`flex-1 text-sm font-medium ${
+              t.done ? "text-muted-foreground line-through" : "text-foreground"
+            }`}
+          >
+            {t.title}
+          </span>
+          <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            P{t.weight}
+          </span>
+          <Select
+            value={t.assigneeId ?? "none"}
+            disabled={isRestricted}
+            onValueChange={(v) => assignTask(orderId, t.id, v === "none" ? undefined : v)}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[8.5rem] gap-2 rounded-full border-border bg-muted/40 px-2 text-xs">
+              {member ? (
+                <span className="flex items-center gap-1.5">
+                  <Avatar member={member} size={20} />
+                  <span className="truncate">{member.name.split(" ")[0]}</span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Atribuir</span>
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem responsável</SelectItem>
+              {team.map((m: any) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
+              Prazo
+            </span>
+            <Input
+              type="date"
+              value={t.dueDate ?? ""}
+              onChange={(e) => setTaskDueDate(orderId, t.id, e.target.value || undefined)}
+              disabled={isRestricted}
+              className="h-8 w-[8.5rem] rounded-full border-border bg-muted/40 px-2 text-xs disabled:opacity-60"
+            />
+          </div>
+          <button
+            onClick={() => removeTask(orderId, t.id)}
+            className="text-muted-foreground hover:text-red-600 disabled:text-muted/30 disabled:hover:text-muted/30"
+            aria-label="Remover tarefa"
+            disabled={isRestricted}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0">
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="CollapsibleContent">
+          {(subtasks.length > 0 || !isRestricted) && (
+            <div className="ml-11 mb-3 mr-14 flex flex-col gap-1.5 border-l-2 border-muted pl-4">
+              {subtasks.map((sub: any) => (
+                <div key={sub.id} className="group flex items-center gap-2">
+                  <Checkbox
+                    checked={sub.done}
+                    className="h-3.5 w-3.5"
+                    onCheckedChange={() => {
+                      if (isRestricted && sub.assigneeId) {
+                        const member = team.find((m: any) => m.email === profile?.email);
+                        if (sub.assigneeId !== member?.id) {
+                          toast.error("Você só pode alternar suas próprias tarefas");
+                          return;
+                        }
+                      }
+                      toggleTask(orderId, sub.id);
+                    }}
+                  />
+                  <span
+                    className={`flex-1 text-xs ${
+                      sub.done ? "text-muted-foreground line-through" : "text-foreground/80"
+                    }`}
+                  >
+                    {sub.title}
+                  </span>
+                  <button
+                    onClick={() => removeTask(orderId, sub.id)}
+                    className="text-muted-foreground opacity-0 transition-opacity hover:text-red-600 disabled:text-muted/30 disabled:hover:text-muted/30 group-hover:opacity-100"
+                    aria-label="Remover subtarefa"
+                    disabled={isRestricted}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {!isRestricted && (
+                <Input
+                  placeholder="Nova subtarefa (Enter)"
+                  className="h-7 max-w-sm rounded-full border-dashed bg-muted/20 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                      addSubtask(orderId, t.id, e.currentTarget.value.trim());
+                      e.currentTarget.value = "";
+                    }
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </CollapsibleContent>
+      </li>
+    </Collapsible>
+  );
+}
+
 /* ============== TAREFAS ============== */
 
 function TasksPanel({ order }: { order: PurchaseOrder }) {
@@ -1271,6 +1425,7 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
   const assignTask = useStore((s) => s.assignTask);
   const setTaskDueDate = useStore((s) => s.setTaskDueDate);
   const addTask = useStore((s) => s.addTask);
+  const addSubtask = useStore((s) => s.addSubtask);
   const removeTask = useStore((s) => s.removeTask);
   const profile = useProfile((s) => s.profile);
   const isRestricted = profile?.role === "Analista" || profile?.role === "Auxiliar";
@@ -1296,7 +1451,8 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
     for (const [, tasks] of byStage) {
       const seen = new Map<string, (typeof order.tasks)[0]>();
       for (const t of tasks) {
-        const key = t.title.trim().toLowerCase();
+        // Include parentId in dedup key so subtasks with same title as parent are preserved
+        const key = `${t.parentId ?? "root"}|${t.title.trim().toLowerCase()}`;
         const existing = seen.get(key);
         if (!existing || t.id.length > existing.id.length) {
           if (existing) {
@@ -1335,82 +1491,26 @@ function TasksPanel({ order }: { order: PurchaseOrder }) {
               {g.column.label}
             </div>
             <ul className="divide-y divide-border">
-              {g.items.map((t) => {
+              {g.items.filter((t) => !t.parentId).map((t) => {
                 const member = findMember(t.assigneeId, team);
+                const subtasks = g.items.filter((sub) => sub.parentId === t.id);
+                // Create a local state to toggle subtasks
                 return (
-                  <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <Checkbox
-                      checked={t.done}
-                      onCheckedChange={() => {
-                        if (isRestricted && t.assigneeId) {
-                          const member = team.find((m) => m.email === profile?.email);
-                          if (t.assigneeId !== member?.id) {
-                            toast.error("Você só pode alternar suas próprias tarefas");
-                            return;
-                          }
-                        }
-                        toggleTask(order.id, t.id);
-                      }}
-                    />
-                    <span
-                      className={`flex-1 text-sm ${
-                        t.done ? "text-muted-foreground line-through" : "text-foreground"
-                      }`}
-                    >
-                      {t.title}
-                    </span>
-                    <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      P{t.weight}
-                    </span>
-                    <Select
-                      value={t.assigneeId ?? "none"}
-                      disabled={isRestricted}
-                      onValueChange={(v) =>
-                        assignTask(order.id, t.id, v === "none" ? undefined : v)
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-auto min-w-[8.5rem] gap-2 rounded-full border-border bg-muted/40 px-2 text-xs">
-                        {member ? (
-                          <span className="flex items-center gap-1.5">
-                            <Avatar member={member} size={20} />
-                            <span className="truncate">{member.name.split(" ")[0]}</span>
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Atribuir</span>
-                        )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sem responsável</SelectItem>
-                        {team.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                        Prazo
-                      </span>
-                      <Input
-                        type="date"
-                        value={t.dueDate ?? ""}
-                        onChange={(e) =>
-                          setTaskDueDate(order.id, t.id, e.target.value || undefined)
-                        }
-                        disabled={isRestricted}
-                        className="h-8 w-[8.5rem] rounded-full border-border bg-muted/40 px-2 text-xs disabled:opacity-60"
-                      />
-                    </div>
-                    <button
-                      onClick={() => removeTask(order.id, t.id)}
-                      className="text-muted-foreground hover:text-red-600 disabled:text-muted/30 disabled:hover:text-muted/30"
-                      aria-label="Remover tarefa"
-                      disabled={isRestricted}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </li>
+                  <TaskItem
+                    key={t.id}
+                    t={t}
+                    orderId={order.id}
+                    subtasks={subtasks}
+                    member={member}
+                    team={team}
+                    isRestricted={isRestricted}
+                    profile={profile}
+                    toggleTask={toggleTask}
+                    assignTask={assignTask}
+                    setTaskDueDate={setTaskDueDate}
+                    removeTask={removeTask}
+                    addSubtask={addSubtask}
+                  />
                 );
               })}
             </ul>
